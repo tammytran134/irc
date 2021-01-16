@@ -43,6 +43,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 #include "log.h"
 
@@ -121,6 +126,31 @@ int main(int argc, char *argv[])
     }
 
     /* Your code goes here */
+    int server_socket;
+    int client_socket;
+    struct sockaddr_in server_addr, client_addr;
+    int yes = 1;
+    socklen_t sin_size = sizeof(struct sockaddr_in);
+
+    char *msg = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
+
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(atoi(port));
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+
+    server_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+    bind(server_socket, (struct sockaddr *) &server_addr, sizeof(server_addr));
+    listen(server_socket, 5);
+
+    while(1)
+    {
+        client_socket = accept(server_socket, (struct sockaddr *) &client_addr, &sin_size);
+        send(client_socket, msg, strlen(msg), 0);
+    }
+
+    close(server_socket);
 
     return 0;
 }
