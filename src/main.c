@@ -50,6 +50,28 @@
 #include <netdb.h>
 
 #include "log.h"
+#include "reply.h"
+
+//pseudo-code
+void recv_msg (char* buf) 
+{
+    //copy to msg until find '\0'
+    while (char c != '\0') {
+        if (char c == '\r' and c->next == '\n') {
+            //then take everything in msg and input to a process function
+            process_msg(msg);
+            //clear msg to make it an empty array
+        }
+        else {
+            //copy char to correct place in msg
+        }
+
+    }
+}
+
+process_msg(msg) {
+    // parse command and parameter
+}
 
 
 int main(int argc, char *argv[])
@@ -128,26 +150,70 @@ int main(int argc, char *argv[])
     /* Your code goes here */
     int server_socket;
     int client_socket;
-    struct sockaddr_in server_addr, client_addr;
+    struct addrinfo hints, *res, *p;
+    struct sockaddr_storage *client_addr;
+    socklen_t sin_size = sizeof(struct sockaddr_storage);
     int yes = 1;
-    socklen_t sin_size = sizeof(struct sockaddr_in);
+    int numbytes;
+    char buf[100];
 
     char *msg = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
 
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(atoi(port));
-    server_addr.sin_addr.s_addr = INADDR_ANY;
+    memset(&hints, 0, sizeof hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE; 
 
-    server_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-    bind(server_socket, (struct sockaddr *) &server_addr, sizeof(server_addr));
-    listen(server_socket, 5);
+    if (getaddrinfo(NULL, port, &hints, &res) != 0) 
+    {
+        perror("getaddrinfo() failed");
+        exit(-1);
+    }
+
+    for (p = res; p !=NULL; p = p->ai_next)
+    {
+        if ((server_socket = socket(p->ai_family, p->ai_socktype, p->ai_protocol) == -1))
+        {
+            perror("socketfailed");
+            continue;
+        }
+        if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) 
+        {
+            perror("setsockopt() failed");
+            continue;
+        }
+        if (bind(server_socket, p->ai_addr, p->ai_addrlen) == -1)
+        {
+            perror("bind() failed");
+            close(server_socket);
+            continue;
+        }
+        if (listen(server_socket, 5) == -1)
+        {
+            perror("listen() failed");
+            close(server_socket);
+        }
+        break;
+    }
+
+    free(res);
+
+    if (p == NULL)
+    {
+        perror("Couldn't find a socket to bind to");
+        exit(-1);
+    }
 
     while(1)
     {
-        client_socket = accept(server_socket, (struct sockaddr *) &client_addr, &sin_size);
-        send(client_socket, msg, strlen(msg), 0);
+        client_socket = accept(server_socket, (struct sockaddr *) client_addr, &sin_size);
+        if (numbytes = recv(client_socket, buf, strlen(buf), 0) == -1) 
+        {
+            perror("recv() failed");
+            exit(1);
+        }
+        buf[numbytes] = '\0';
+        recv_msg(buf);
     }
 
     close(server_socket);
