@@ -57,27 +57,42 @@ typedef struct msg {
     int counter;
 } msg_t;
 
-msg_t recv_msg (char* buf, msg_t rmsg) 
+msg_t recv_msg (char* buf, msg_t rmsg, int client_socket) 
 {
     char c;
+    send(client_socket, "it comes here1\n", 15, 0);
+    printf("it comes here2\n");
     for (int i = 0; i < strlen(buf); i++)
     {
         c = buf[i];
-        if (((c == '\r') && ((i+1) < strlen(buf)) && (buf[i+1] == '\n')) || 
-        (rmsg.counter == 512))   
-        {
-            //then take everything in msg and input to a process function
-            //process_msg(msg_t);
-            char *new_msg = (char *) malloc (sizeof (char) * 513);
-            msg_t new_rmsg = {"", 0};
+        printf("it comes here\n");
+        if (rmsg.counter == 512) {
+            char copy_msg[512];
+            strcpy(copy_msg, rmsg.msg);
+            //process_msg(copy_msg);
+            //send(client_socket, copy_msg, strlen(copy_msg), 0);
+            char *new_msg = (char *) malloc (sizeof (char) * 512);
             rmsg.msg = new_msg;
-            return new_rmsg;
-            //clear msg to make it an empty array
+            rmsg.counter = 0;
+            return rmsg;
         }
         else 
-        {
+        {   
             rmsg.msg[rmsg.counter] = c;
-            rmsg.counter++;
+            if (c == '\n') {
+                if (rmsg.msg[rmsg.counter-1] == '\r') {
+                    char copy_msg[strlen(rmsg.msg)];
+                    strcpy(copy_msg, rmsg.msg);
+                    //process_msg(copy_msg);
+                    //send(client_socket, copy_msg, strlen(copy_msg), 0);
+                    char *new_msg = (char *) malloc (sizeof (char) * 512);
+                    rmsg.msg = new_msg;
+                    rmsg.counter = 0;
+                }
+            }
+            else {
+                rmsg.counter++;
+            }
             //copy char to correct place in msg
         }
     }
@@ -196,7 +211,7 @@ int main(int argc, char *argv[])
     int yes = 1;
     int numbytes;
     char *buf = (char *) malloc (sizeof (char) * 100);;
-    char *msg = (char *) malloc (sizeof (char) * 513);
+    char *msg = (char *) malloc (sizeof (char) * 512);
     msg_t rmsg = {"", 0};
     rmsg.msg = msg;
 
@@ -215,7 +230,7 @@ int main(int argc, char *argv[])
 
     for (p = res; p !=NULL; p = p->ai_next)
     {
-        if ((server_socket = socket(p->ai_family, p->ai_socktype, p->ai_protocol) == -1))
+        if ((server_socket = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
         {
             perror("socketfailed");
             continue;
@@ -250,13 +265,17 @@ int main(int argc, char *argv[])
     while(1)
     {
         client_socket = accept(server_socket, (struct sockaddr *) client_addr, &sin_size);
-        if ((numbytes = recv(client_socket, buf, strlen(buf), 0) == -1)) 
+        if ((numbytes = recv(client_socket, buf, strlen(buf), 0)) == -1) 
         {
             perror("recv() failed");
             exit(1);
         }
         buf[numbytes] = '\0';
-        rmsg = recv_msg(buf, rmsg);
+        send(client_socket, buf, strlen(buf), 0);
+        printf ("%s", buf);
+        rmsg = recv_msg(buf, rmsg, client_socket);
+        char *msg1 = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
+        send(client_socket, msg1, strlen(msg1), 0);
     }
 
     close(server_socket);
