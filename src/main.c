@@ -52,26 +52,66 @@
 #include "log.h"
 #include "reply.h"
 
-//pseudo-code
-void recv_msg (char* buf) 
+typedef struct msg {
+    char* msg;
+    int counter;
+} msg_t;
+
+msg_t recv_msg (char* buf, msg_t rmsg) 
 {
-    //copy to msg until find '\0'
-    while (char c != '\0') {
-        if (char c == '\r' and c->next == '\n') {
+    char c;
+    for (int i = 0; i < strlen(buf); i++)
+    {
+        c = buf[i];
+        if (((c == '\r') && ((i+1) < strlen(buf)) && (buf[i+1] == '\n')) || 
+        (rmsg.counter == 512))   
+        {
             //then take everything in msg and input to a process function
-            process_msg(msg);
+            //process_msg(msg_t);
+            char *new_msg = (char *) malloc (sizeof (char) * 513);
+            msg_t new_rmsg = {"", 0};
+            rmsg.msg = new_msg;
+            return new_rmsg;
             //clear msg to make it an empty array
         }
-        else {
+        else 
+        {
+            rmsg.msg[rmsg.counter] = c;
+            rmsg.counter++;
             //copy char to correct place in msg
         }
-
     }
+    return rmsg;
 }
 
-process_msg(msg) {
-    // parse command and parameter
-}
+
+// hashtable nicks
+
+// struct params {
+//     field no_param;
+//     char array param;
+//     char int reply;
+// }
+
+// handler(cmd) {
+//     NICK -> params
+//     PRIVMESSAGE -> params
+
+//     switch (cmd) {
+//         case 'NICK':    // p1, p2  p3
+//             struct params nick:
+
+//     }
+// }
+
+// process_msg(msg) {
+//     // 
+//     NICK 
+//     USER
+
+
+//     // parse command and parameter
+// }
 
 
 int main(int argc, char *argv[])
@@ -155,11 +195,14 @@ int main(int argc, char *argv[])
     socklen_t sin_size = sizeof(struct sockaddr_storage);
     int yes = 1;
     int numbytes;
-    char buf[100];
+    char *buf = (char *) malloc (sizeof (char) * 100);;
+    char *msg = (char *) malloc (sizeof (char) * 513);
+    msg_t rmsg = {"", 0};
+    rmsg.msg = msg;
 
-    char *msg = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
+    //char *msg = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
 
-    memset(&hints, 0, sizeof hints));
+    memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; 
@@ -207,13 +250,13 @@ int main(int argc, char *argv[])
     while(1)
     {
         client_socket = accept(server_socket, (struct sockaddr *) client_addr, &sin_size);
-        if (numbytes = recv(client_socket, buf, strlen(buf), 0) == -1) 
+        if ((numbytes = recv(client_socket, buf, strlen(buf), 0) == -1)) 
         {
             perror("recv() failed");
             exit(1);
         }
         buf[numbytes] = '\0';
-        recv_msg(buf);
+        rmsg = recv_msg(buf, rmsg);
     }
 
     close(server_socket);
