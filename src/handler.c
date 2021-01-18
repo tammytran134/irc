@@ -8,51 +8,60 @@
 #include "handler.h"
 #include "reply.h"
 
-bool sameStr(char* s1, char* s2) {
+bool sameStr(char *s1, char *s2)
+{
     return strcmp(s1, s2) == 0;
 }
 
-message parseMsg(char *msgBuffer) {
+message parse_msg(char *msgBuffer)
+{
+    /* Parse command from message buffer into command struct */
     char *token;
     char *rest = msgBuffer;
 
     message parsedMsg = {"", {}};
     int counter = 0;
-    while (token = strtok_r(rest, " ", &rest)) {
+    while (token = strtok_r(rest, " ", &rest))
+    {
         if (counter == 0)
             parsedMsg.command = token;
         else
             parsedMsg.params[counter - 1] = token;
+        counter++;
     }
 
     return parsedMsg;
 }
 
-void processMsg(int clientSocket, char *clientHostname, message msg) {
+void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, message msg)
+{
     /* Execute parsed message */
     char *replyMsg;
     char *replyCode;
-    if (sameStr(msg.command, "NICK")) {
+    if (sameStr(msg.command, "NICK"))
+    {
         char *nick = msg.params[0];
-        // TODO: add to nicks hashtable (contains socket information)
+        client_info *new_client = malloc(sizeof(client_info));
+        strcpy(new_client->info.nick, nick);
+        strcpy(new_client->info.realname, NULL);
+        strcpy(new_client->info.username, nick);
+        add_client(new_client);
     }
-    else if(samesStr(msg.command, "USER")) {
+    else if (samesStr(msg.command, "USER")) // USER user01 * * :John Doe
+    {
+        client_info *client = get_client_info(clientHostname);
         char *username = msg.params[0];
-        char *realName = msg.params[3];
-        replyCode = RPL_WELCOME;
-        char hostname[101];
-        gethostname(hostname, 101);
-        clientHostname = "foo.example.com";     // passed in from main.c
+        char *realname = msg.params[3];
+        strcpy(replyCode, RPL_WELCOME);
         char *replyMsg;
         sprintf(replyMsg,
-            "%s %s %s :Welcome to the Internet Relay Network %s!%s@%s\r\n",
-            hostname,
-            replyCode,
-            username,
-            username,
-            username,
-            clientHostname
-        );
+                "%s %s %s :Welcome to the Internet Relay Network %s!%s@%s\r\n",
+                serverHostname,
+                replyCode,
+                client->info.nick,
+                client->info.nick,
+                username,
+                clientHostname);
         send(clientSocket, replyMsg, strlen(replyMsg), 0);
     }
 
