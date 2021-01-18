@@ -10,6 +10,7 @@ typedef struct nick_info_struct {
     char *username;
     char *realname;
 } nick_info;
+
 typedef struct client_info_struct
 {
     char *hostname; /* key for hashtable */
@@ -17,17 +18,9 @@ typedef struct client_info_struct
     UT_hash_handle hh;  /* makes this struct hashable */
 } client_info;
 
-client_info *clients_hashtable = NULL;
+void add_client(client_info *c, client_info *clients_hashtable);
 
-void add_client(client_info *c) {
-    HASH_ADD_STR(clients_hashtable, hostname, c);
-}
-
-client_info* get_client_info(char *hostname) {
-    client_info *result;
-    HASH_FIND_STR(clients_hashtable, &hostname, result);
-    return result;
-}
+client_info* get_client_info(char *hostname, client_info *clients_hashtable);
 
 typedef struct cmd {
     char* command;

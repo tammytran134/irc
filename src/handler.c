@@ -8,6 +8,16 @@
 #include "handler.h"
 #include "reply.h"
 
+void add_client(client_info *c, client_info *clients_hashtable) {
+    HASH_ADD_STR(clients_hashtable, hostname, c);
+}
+
+client_info* get_client_info(char *hostname, client_info *clients_hashtable) {
+    client_info *result;
+    HASH_FIND_STR(clients_hashtable, hostname, result);
+    return result;
+}
+
 bool sameStr(char *s1, char *s2)
 {
     return strcmp(s1, s2) == 0;

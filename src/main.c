@@ -241,15 +241,15 @@ int main(int argc, char *argv[])
     while(1)
     {
         client_socket = accept(server_socket, (struct sockaddr *) client_addr, &sin_size);
-        if ((numbytes = recv(client_socket, buf, strlen(buf), 0)) == -1) 
+        if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1) 
         {
             perror("recv() failed");
             exit(1);
         }
         buf[numbytes] = '\0';
         //Here I'm trying to see the data that recv receives
-        // printf("data being sent is %d\n", numbytes);
-        // printf ("The string is %s\n", buf);
+        printf("data being sent is %d\n", numbytes);
+        printf ("The string is %s\n", buf);
         char clientHostname[1024];
         char service[1024];
         char serverHostname[1024];
