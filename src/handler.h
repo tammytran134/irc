@@ -1,7 +1,7 @@
 #ifndef CHIRC_HANDLER_H_
 #define CHIRC_HANDLER_H_
 
-#include "lib/uthash.h"
+#include "uthash.h"
 
 /* A HASHTABLE STORING ACTIVE NICKS' INFORMATION */
 typedef struct nick_info_struct {
