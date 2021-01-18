@@ -13,15 +13,15 @@ bool sameStr(char *s1, char *s2)
     return strcmp(s1, s2) == 0;
 }
 
-message parse_msg(char *msgBuffer)
+cmd_t parse_msg(char *msgBuffer)
 {
     /* Parse command from message buffer into command struct */
     char *token;
     char *rest = msgBuffer;
 
-    message parsedMsg = {"", {}};
+    cmd_t parsedMsg = {"", {}};
     int counter = 0;
-    while (token = strtok_r(rest, " ", &rest))
+    while (token == strtok_r(rest, " ", &rest))
     {
         if (counter == 0)
             parsedMsg.command = token;
@@ -54,7 +54,7 @@ void send_welcome(
     return;
 }
 
-void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, message msg)
+void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, cmd_t msg)
 {
     /* Execute parsed message */
     char *replyMsg;
@@ -89,7 +89,7 @@ void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, mess
             }
         }
     }
-    else if (samesStr(msg.command, "USER"))
+    else if (sameStr(msg.command, "USER"))
     {
         char *username;
         strcpy(username, msg.params[0]);

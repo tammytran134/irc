@@ -50,7 +50,6 @@
 #include <netdb.h>
 
 #include "log.h"
-#include "reply.h"
 #include "handler.h"
 
 typedef struct msg {
@@ -254,7 +253,7 @@ int main(int argc, char *argv[])
         char clientHostname[1024];
         char service[1024];
         char serverHostname[1024];
-        getnameinfo(&client_addr, sizeof client_addr, clientHostname, sizeof clientHostname, service, sizeof service, 0);
+        getnameinfo((struct sockaddr *) client_addr, sin_size, clientHostname, sizeof clientHostname, service, sizeof service, 0);
         gethostname(serverHostname, strlen(serverHostname));
         rmsg = recv_msg(buf, rmsg, client_socket, clientHostname, serverHostname);
         // char *msg1 = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";

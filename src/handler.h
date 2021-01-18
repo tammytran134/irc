@@ -2,6 +2,7 @@
 #define CHIRC_HANDLER_H_
 
 #include "uthash.h"
+#include <stdbool.h>
 
 /* A HASHTABLE STORING ACTIVE NICKS' INFORMATION */
 typedef struct nick_info_struct {
@@ -28,13 +29,14 @@ client_info* get_client_info(char *hostname) {
     return result;
 }
 
-typedef struct msg {
+typedef struct cmd {
     char* command;
     char* params[15];
-} message;
+} cmd_t;
 
 /* IRC server's message handler helper functions */
-message parse_msg(char *buffer);
-void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, message msg);
+bool sameStr(char *s1, char *s2);
+cmd_t parse_msg(char *buffer);
+void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, cmd_t msg);
 
 #endif
