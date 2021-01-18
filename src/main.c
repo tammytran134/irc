@@ -51,13 +51,19 @@
 
 #include "log.h"
 #include "reply.h"
+#include "handler.h"
 
 typedef struct msg {
     char* msg;
     int counter;
 } msg_t;
 
-msg_t recv_msg (char* buf, msg_t rmsg, int client_socket) 
+msg_t recv_msg (
+    char* buf, 
+    msg_t rmsg, 
+    int client_socket,
+    char* clientHostname,
+    char* serverHostname) 
 {
     char c;
     //send(client_socket, "it comes here1\n", 15, 0);
@@ -70,8 +76,8 @@ msg_t recv_msg (char* buf, msg_t rmsg, int client_socket)
             char copy_msg[512];
             strcpy(copy_msg, rmsg.msg);
             //process_msg(copy_msg);
-            //send(client_socket, copy_msg, strlen(copy_msg), 0);
-            char *new_msg = (char *) malloc (sizeof (char) * 512);
+            exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
+            char *new_msg = (char *)malloc(sizeof(char) * 512);
             rmsg.msg = new_msg;
             rmsg.counter = 0;
             return rmsg;
@@ -84,7 +90,7 @@ msg_t recv_msg (char* buf, msg_t rmsg, int client_socket)
                     char copy_msg[strlen(rmsg.msg)];
                     strcpy(copy_msg, rmsg.msg);
                     //process_msg(copy_msg);
-                    //send(client_socket, copy_msg, strlen(copy_msg), 0);
+                    exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
                     char *new_msg = (char *) malloc (sizeof (char) * 512);
                     rmsg.msg = new_msg;
                     rmsg.counter = 0;
@@ -98,35 +104,6 @@ msg_t recv_msg (char* buf, msg_t rmsg, int client_socket)
     }
     return rmsg;
 }
-
-
-// hashtable nicks
-
-// struct params {
-//     field no_param;
-//     char array param;
-//     char int reply;
-// }
-
-// handler(cmd) {
-//     NICK -> params
-//     PRIVMESSAGE -> params
-
-//     switch (cmd) {
-//         case 'NICK':    // p1, p2  p3
-//             struct params nick:
-
-//     }
-// }
-
-// process_msg(msg) {
-//     // 
-//     NICK 
-//     USER
-
-
-//     // parse command and parameter
-// }
 
 
 int main(int argc, char *argv[])
@@ -272,11 +249,16 @@ int main(int argc, char *argv[])
         }
         buf[numbytes] = '\0';
         //Here I'm trying to see the data that recv receives
-        printf("data being sent is %d\n", numbytes);
-        printf ("The string is %s\n", buf);
-        rmsg = recv_msg(buf, rmsg, client_socket);
-        char *msg1 = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
-        send(client_socket, msg1, strlen(msg1), 0);
+        // printf("data being sent is %d\n", numbytes);
+        // printf ("The string is %s\n", buf);
+        char clientHostname[1024];
+        char service[1024];
+        char serverHostname[1024];
+        getnameinfo(&client_addr, sizeof client_addr, clientHostname, sizeof clientHostname, service, sizeof service, 0);
+        gethostname(serverHostname, strlen(serverHostname));
+        rmsg = recv_msg(buf, rmsg, client_socket, clientHostname, serverHostname);
+        // char *msg1 = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
+        // send(client_socket, msg1, strlen(msg1), 0);
     }
 
     close(server_socket);
