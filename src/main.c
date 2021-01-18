@@ -55,6 +55,8 @@
 typedef struct msg {
     char* msg;
     int counter;
+    bool NICK;
+    bool USER;
 } msg_t;
 
 msg_t recv_msg (
@@ -74,11 +76,26 @@ msg_t recv_msg (
         if (rmsg.counter == 512) {
             char copy_msg[512];
             strcpy(copy_msg, rmsg.msg);
-            //process_msg(copy_msg);
-            exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
+            //exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
+            send(client_socket, copy_msg, strlen(copy_msg), 0);
+            //Testcode
             char *new_msg = (char *)malloc(sizeof(char) * 512);
             rmsg.msg = new_msg;
             rmsg.counter = 0;
+            cmd_t cmd = parse_msg(copy_msg);
+            if (rmsg.NICK == false)
+            {
+                if (sameStr(cmd.command, "NICK")) {
+                    rmsg.NICK = true;
+                }
+            }
+            if (rmsg.USER == false)
+            {
+                if (sameStr(cmd.command, "USER")) {
+                    rmsg.USER = true;
+                }
+                
+            }
             return rmsg;
         }
         else 
@@ -88,17 +105,32 @@ msg_t recv_msg (
                 if (rmsg.msg[rmsg.counter-1] == '\r') {
                     char copy_msg[strlen(rmsg.msg)];
                     strcpy(copy_msg, rmsg.msg);
-                    //process_msg(copy_msg);
-                    exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
+                    //exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
+                    send(client_socket, copy_msg, strlen(copy_msg), 0);
                     char *new_msg = (char *) malloc (sizeof (char) * 512);
                     rmsg.msg = new_msg;
                     rmsg.counter = 0;
+                    cmd_t cmd = parse_msg(copy_msg);
+                    if (rmsg.NICK == false)
+                    {
+                        if (sameStr(cmd.command, "NICK")) {
+                            rmsg.NICK = true;
+                        }
+                    }
+                    if (rmsg.USER == false)
+                    {
+                        if (sameStr(cmd.command, "USER")) {
+                        rmsg.USER = true;
+                        }
+                    }
+                }
+                else {
+                    rmsg.counter++;
                 }
             }
             else {
                 rmsg.counter++;
             }
-            //copy char to correct place in msg
         }
     }
     return rmsg;
@@ -188,8 +220,11 @@ int main(int argc, char *argv[])
     int numbytes;
     char buf[100];
     char msg[512];
-    msg_t rmsg = {"", 0};
+    msg_t rmsg = {"", 0, false, false};
     rmsg.msg = msg;
+    bool NICK = false;
+    bool USER = false;
+    char *serverHostname;
 
     //char *msg = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
 
@@ -241,23 +276,23 @@ int main(int argc, char *argv[])
     while(1)
     {
         client_socket = accept(server_socket, (struct sockaddr *) client_addr, &sin_size);
-        if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1) 
-        {
-            perror("recv() failed");
-            exit(1);
-        }
-        buf[numbytes] = '\0';
-        //Here I'm trying to see the data that recv receives
-        printf("data being sent is %d\n", numbytes);
-        printf ("The string is %s\n", buf);
-        char clientHostname[1024];
-        char service[1024];
-        char serverHostname[1024];
-        getnameinfo((struct sockaddr *) client_addr, sin_size, clientHostname, sizeof clientHostname, service, sizeof service, 0);
-        gethostname(serverHostname, strlen(serverHostname));
-        rmsg = recv_msg(buf, rmsg, client_socket, clientHostname, serverHostname);
-        // char *msg1 = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
-        // send(client_socket, msg1, strlen(msg1), 0);
+        //gethostname(serverHostname, sizeof serverHostname);
+        while (!(rmsg.NICK && rmsg.USER))
+            if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1) 
+            {
+                perror("recv() failed");
+                exit(1);
+            }
+            buf[numbytes] = '\0';
+            //Here I'm trying to see the data that recv receives
+            printf("data being sent is %d\n", numbytes);
+            printf ("The string is %s\n", buf);
+            //
+            char clientHostname[1024];
+            char service[1024];
+            char serverHostname[1024];
+            getnameinfo((struct sockaddr *) client_addr, sin_size, clientHostname, sizeof clientHostname, service, sizeof service, 0);
+            rmsg = recv_msg(buf, rmsg, client_socket, clientHostname, serverHostname);
     }
 
     close(server_socket);
