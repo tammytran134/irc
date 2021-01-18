@@ -60,8 +60,8 @@ typedef struct msg {
 msg_t recv_msg (char* buf, msg_t rmsg, int client_socket) 
 {
     char c;
-    send(client_socket, "it comes here1\n", 15, 0);
-    printf("it comes here2\n");
+    //send(client_socket, "it comes here1\n", 15, 0);
+    //printf("it comes here2\n");
     for (int i = 0; i < strlen(buf); i++)
     {
         c = buf[i];
@@ -210,8 +210,8 @@ int main(int argc, char *argv[])
     socklen_t sin_size = sizeof(struct sockaddr_storage);
     int yes = 1;
     int numbytes;
-    char *buf = (char *) malloc (sizeof (char) * 100);;
-    char *msg = (char *) malloc (sizeof (char) * 512);
+    char buf[100];
+    char msg[512];
     msg_t rmsg = {"", 0};
     rmsg.msg = msg;
 
@@ -271,8 +271,9 @@ int main(int argc, char *argv[])
             exit(1);
         }
         buf[numbytes] = '\0';
-        send(client_socket, buf, strlen(buf), 0);
-        printf ("%s", buf);
+        //Here I'm trying to see the data that recv receives
+        printf("data being sent is %d\n", numbytes);
+        printf ("The string is %s\n", buf);
         rmsg = recv_msg(buf, rmsg, client_socket);
         char *msg1 = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
         send(client_socket, msg1, strlen(msg1), 0);
