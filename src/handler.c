@@ -33,36 +33,94 @@ message parse_msg(char *msgBuffer)
     return parsedMsg;
 }
 
+void send_welcome(
+    int clientSocket,
+    char *replyCode,
+    char *clientHostname,
+    char *serverHostname,
+    char *username,
+    char *nick)
+{
+    char *replyMsg;
+    sprintf(replyMsg,
+            "%s %s %s :Welcome to the Internet Relay Network %s!%s@%s\r\n",
+            serverHostname,
+            replyCode,
+            nick,
+            nick,
+            username,
+            clientHostname);
+    send(clientSocket, replyMsg, strlen(replyMsg), 0);
+    return;
+}
+
 void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, message msg)
 {
     /* Execute parsed message */
     char *replyMsg;
     char *replyCode;
+    client_info *client = get_client_info(clientHostname);
     if (sameStr(msg.command, "NICK"))
     {
         char *nick = msg.params[0];
-        client_info *new_client = malloc(sizeof(client_info));
-        strcpy(new_client->info.nick, nick);
-        strcpy(new_client->info.realname, NULL);
-        strcpy(new_client->info.username, nick);
-        add_client(new_client);
+        if (client == NULL)
+        {
+            /* NICK == first command */
+            client_info *new_client = malloc(sizeof(client_info));
+            strcpy(new_client->info.nick, nick);
+            strcpy(new_client->info.realname, NULL);
+            strcpy(new_client->info.username, NULL);
+            add_client(new_client);
+        }
+        else
+        {
+            /* NICK == second command */
+            strcpy(client->info.nick, nick);
+            if (client->info.username != NULL)
+            {
+                strcpy(replyCode, RPL_WELCOME);
+                send_welcome(
+                    clientSocket,
+                    replyCode,
+                    clientHostname,
+                    serverHostname,
+                    client->info.username,
+                    client->info.nick);
+            }
+        }
     }
-    else if (samesStr(msg.command, "USER")) // USER user01 * * :John Doe
+    else if (samesStr(msg.command, "USER"))
     {
-        client_info *client = get_client_info(clientHostname);
-        char *username = msg.params[0];
-        char *realname = msg.params[3];
-        strcpy(replyCode, RPL_WELCOME);
-        char *replyMsg;
-        sprintf(replyMsg,
-                "%s %s %s :Welcome to the Internet Relay Network %s!%s@%s\r\n",
-                serverHostname,
-                replyCode,
-                client->info.nick,
-                client->info.nick,
-                username,
-                clientHostname);
-        send(clientSocket, replyMsg, strlen(replyMsg), 0);
+        char *username;
+        strcpy(username, msg.params[0]);
+        char *realname;
+        strcpy(realname, msg.params[3]);
+        if (client != NULL)
+        {
+            /* USER == second name */
+            strcpy(client->info.username, username);
+            strcpy(client->info.realname, realname);
+            if (client->info.nick != NULL)
+            {
+                strcpy(replyCode, RPL_WELCOME);
+                send_welcome(
+                    clientSocket,
+                    replyCode,
+                    clientHostname,
+                    serverHostname,
+                    username,
+                    client->info.nick);
+            }
+        }
+        else
+        {
+            /* USER == first command */
+            client_info *new_client = malloc(sizeof(client_info));
+            strcpy(new_client->info.nick, NULL);
+            strcpy(new_client->info.realname, realname);
+            strcpy(new_client->info.username, username);
+            add_client(new_client);
+        }
     }
 
     return;
