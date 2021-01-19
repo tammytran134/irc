@@ -63,21 +63,36 @@ msg_t recv_msg(
      * buf: buffer for incoming mssage
      * rmsg: holds data for incoming message until a complete message is formed
      * clients: pointer to clients hashtable's pointer
+     * This message returns the updated msg_t struct back to the main function,
+     * so that the msg_t state gets updated between each recv() call
      */
     char c;
     for (int i = 0; i < strlen(buf); i++)
     {
         c = buf[i];
+        /* If the command being sent contains more than 512 characters 
+         * then we truncate the message and process it anyways
+         */
         if (rmsg.counter == MAX_MSG_LEN)
         {
+            /* copy the message to a new char array to process it */
             char copy_msg[MAX_MSG_LEN];
             strcpy(copy_msg, rmsg.msg);
-            // send(client_socket, copy_msg, strlen(copy_msg), 0);
-            exec_msg(client_socket, clients, client_hostname, server_hostname, parse_msg(copy_msg));
+            /* process it */
+            exec_msg(client_socket, clients, client_hostname, 
+                    server_hostname, parse_msg(copy_msg));
+            /* renew the msg_t struct to wipe out the char *msg buffer
+             * and renew the counter to hold new message
+             * after current command has been sent away to be processed
+             */
             char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
             rmsg.msg = new_msg;
             rmsg.counter = 0;
             cmd_t cmd = parse_msg(copy_msg);
+            /* check if the command being sent is NICK or USER
+             * if yes, then turn boolean field NICK or USER to 
+             * true to pass it back to main function
+             */
             if (rmsg.nick_cmd == false)
             {
                 if (sameStr(cmd.command, "NICK"))
@@ -94,21 +109,33 @@ msg_t recv_msg(
             }
             return rmsg;
         }
+        /* If not message overflow, then add character to msg buffer */
         else
         {
             rmsg.msg[rmsg.counter] = c;
+            /* If end of command */
             if (c == '\n')
             {
                 if (rmsg.msg[rmsg.counter - 1] == '\r')
                 {
+                    /* copy the message to a new char array to process it */
                     char copy_msg[strlen(rmsg.msg)];
                     strcpy(copy_msg, rmsg.msg);
-                    // send(client_socket, copy_msg, strlen(copy_msg), 0);
-                    exec_msg(client_socket, clients, client_hostname, server_hostname, parse_msg(copy_msg));
+                    exec_msg(client_socket, clients, 
+                            client_hostname, server_hostname, 
+                            parse_msg(copy_msg));
+                    /* renew the msg_t struct to wipe out the char *msg buffer
+                     * and renew the counter to hold new message
+                     * after current command has been sent away to be processed
+                     */
                     char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
                     rmsg.msg = new_msg;
                     rmsg.counter = 0;
                     cmd_t cmd = parse_msg(copy_msg);
+                    /* check if the command being sent is NICK or USER
+                     * if yes, then turn boolean field NICK or USER to 
+                     * true to pass it back to main function
+                     */
                     if (rmsg.nick_cmd == false)
                     {
                         if (sameStr(cmd.command, "NICK"))
@@ -177,7 +204,8 @@ cmd_t parse_msg(char *msg_buffer)
                 /* Param takes up rest of message */
                 /* Accumulate the rest of param into params[counter - 1] */
                 char *param_so_far = parsed_msg.params[counter - 1];
-                int concat_param_len = strlen(param_so_far) + strlen(token) + 1;
+                int concat_param_len = strlen(param_so_far) 
+                                        + strlen(token) + 1;
                 char *concat_param = malloc(sizeof(char) * concat_param_len);
                 concat_param = strcat(strcat(param_so_far, " "), token);
                 free(parsed_msg.params[counter - 1]);
