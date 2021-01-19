@@ -67,8 +67,8 @@ msg_t recv_msg (
     char* serverHostname) 
 {
     char c;
-    //send(client_socket, "it comes here1\n", 15, 0);
-    //printf("it comes here2\n");
+    send(client_socket, "it comes here1\n", 15, 0);
+    printf("it comes here2\n");
     for (int i = 0; i < strlen(buf); i++)
     {
         c = buf[i];
@@ -222,9 +222,6 @@ int main(int argc, char *argv[])
     char msg[512];
     msg_t rmsg = {"", 0, false, false};
     rmsg.msg = msg;
-    bool NICK = false;
-    bool USER = false;
-    char *serverHostname;
 
     //char *msg = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
 
@@ -276,8 +273,11 @@ int main(int argc, char *argv[])
     while(1)
     {
         client_socket = accept(server_socket, (struct sockaddr *) client_addr, &sin_size);
+        char *serverHostname;
+        serverHostname = "tammy";
         //gethostname(serverHostname, sizeof serverHostname);
         while (!(rmsg.NICK && rmsg.USER))
+        {
             if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1) 
             {
                 perror("recv() failed");
@@ -288,11 +288,12 @@ int main(int argc, char *argv[])
             printf("data being sent is %d\n", numbytes);
             printf ("The string is %s\n", buf);
             //
-            char clientHostname[1024];
+            char *clientHostname;
             char service[1024];
-            char serverHostname[1024];
-            getnameinfo((struct sockaddr *) client_addr, sin_size, clientHostname, sizeof clientHostname, service, sizeof service, 0);
+            clientHostname = "tammy2";
+            //getnameinfo((struct sockaddr *) client_addr, sin_size, clientHostname, sizeof clientHostname, service, sizeof service, 0);
             rmsg = recv_msg(buf, rmsg, client_socket, clientHostname, serverHostname);
+        }
     }
 
     close(server_socket);
