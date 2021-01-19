@@ -8,53 +8,62 @@
 #include "handler.h"
 #include "reply.h"
 
-void add_client(client_info *c, client_info **clients)
+void add_client(client_info_t *c, client_info_t **clients)
 {
+    /* Add client to clients' hashtable */
     HASH_ADD_STR(*clients, hostname, c);
 }
 
-client_info *get_client_info(char *hostname, client_info **clients)
+client_info_t *get_client_info(char *hostname, client_info_t **clients)
 {
-    client_info *result;
+    /* Return pointer to client with given key (hostname) */
+    client_info_t *result;
     HASH_FIND_STR(*clients, hostname, result);
     return result;
 }
 
 bool sameStr(char *s1, char *s2)
 {
+    /* Check if two strings are the same */
     return strcmp(s1, s2) == 0;
 }
 
 void send_welcome(
-    int clientSocket,
-    char *replyCode,
-    char *clientHostname,
-    char *serverHostname,
+    int client_socket,
+    char *reply_code,
+    char *client_hostname,
+    char *server_hostname,
     char *username,
     char *nick)
 {
-    char replyMsg[1024];
-    sprintf(replyMsg,
+    /* Format and send welcome message to client */
+    char reply_msg[1024];
+    sprintf(reply_msg,
             ":%s %s %s :Welcome to the Internet Relay Network %s!%s@%s\r\n",
-            serverHostname,
-            replyCode,
+            server_hostname,
+            reply_code,
             nick,
             nick,
             username,
-            clientHostname);
+            client_hostname);
 
-    send(clientSocket, replyMsg, strlen(replyMsg), 0);
+    send(client_socket, reply_msg, strlen(reply_msg), 0);
     return;
 }
 
 msg_t recv_msg(
     char *buf,
     msg_t rmsg,
-    client_info **clients,
+    client_info_t **clients,
     int client_socket,
-    char *clientHostname,
-    char *serverHostname)
+    char *client_hostname,
+    char *server_hostname)
 {
+    /* Receives and process incoming message from server:
+     * buf: buffer for incoming mssage
+     * rmsg: holds data for incoming message until a complete message is formed
+     * clients: pointer to clients hashtable's pointer
+     */
     char c;
     for (int i = 0; i < strlen(buf); i++)
     {
@@ -64,23 +73,23 @@ msg_t recv_msg(
             char copy_msg[MAX_MSG_LEN];
             strcpy(copy_msg, rmsg.msg);
             // send(client_socket, copy_msg, strlen(copy_msg), 0);
-            exec_msg(client_socket, clients, clientHostname, serverHostname, parse_msg(copy_msg));
+            exec_msg(client_socket, clients, client_hostname, server_hostname, parse_msg(copy_msg));
             char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
             rmsg.msg = new_msg;
             rmsg.counter = 0;
             cmd_t cmd = parse_msg(copy_msg);
-            if (rmsg.NICK == false)
+            if (rmsg.nick_cmd == false)
             {
                 if (sameStr(cmd.command, "NICK"))
                 {
-                    rmsg.NICK = true;
+                    rmsg.nick_cmd = true;
                 }
             }
-            if (rmsg.USER == false)
+            if (rmsg.user_cmd == false)
             {
                 if (sameStr(cmd.command, "USER"))
                 {
-                    rmsg.USER = true;
+                    rmsg.user_cmd = true;
                 }
             }
             return rmsg;
@@ -95,23 +104,23 @@ msg_t recv_msg(
                     char copy_msg[strlen(rmsg.msg)];
                     strcpy(copy_msg, rmsg.msg);
                     // send(client_socket, copy_msg, strlen(copy_msg), 0);
-                    exec_msg(client_socket, clients, clientHostname, serverHostname, parse_msg(copy_msg));
+                    exec_msg(client_socket, clients, client_hostname, server_hostname, parse_msg(copy_msg));
                     char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
                     rmsg.msg = new_msg;
                     rmsg.counter = 0;
                     cmd_t cmd = parse_msg(copy_msg);
-                    if (rmsg.NICK == false)
+                    if (rmsg.nick_cmd == false)
                     {
                         if (sameStr(cmd.command, "NICK"))
                         {
-                            rmsg.NICK = true;
+                            rmsg.nick_cmd = true;
                         }
                     }
-                    if (rmsg.USER == false)
+                    if (rmsg.user_cmd == false)
                     {
                         if (sameStr(cmd.command, "USER"))
                         {
-                            rmsg.USER = true;
+                            rmsg.user_cmd = true;
                         }
                     }
                 }
@@ -129,88 +138,114 @@ msg_t recv_msg(
     return rmsg;
 }
 
-cmd_t parse_msg(char *msgBuffer)
+cmd_t parse_msg(char *msg_buffer)
 {
     /* Parse command from message buffer into command struct */
     char *token;
-    char *rest = msgBuffer;
+    char *rest = msg_buffer;
 
-    cmd_t parsedMsg;
-    parsedMsg.numParams = 0;
+    cmd_t parsed_msg;
+    parsed_msg.num_params = 0;
     int counter = 0;
-    bool paramIsRest = false;
+
+    /* Flag to indicate a param that takes up the rest of the message */
+    bool param_is_rest = false;
     while ((token = strtok_r(rest, " \t\r\n", &rest)))
     {
         if (counter == 0)
         {
-            parsedMsg.command = malloc(sizeof(char) * strlen(token));
-            strcpy(parsedMsg.command, token);
+            /* token == command keyword */
+            parsed_msg.command = malloc(sizeof(char) * strlen(token));
+            strcpy(parsed_msg.command, token);
         }
-        else if (counter < 15)
+        else if (counter < MAX_PARAMS)
         {
-            if (!paramIsRest)
+            /* Token is a param */
+            if (!param_is_rest)
             {
-                parsedMsg.params[counter - 1] = malloc(sizeof(char) * strlen(token));
+                /* Param does not take up the rest of the message */ 
+                size_t token_size = sizeof(char) * strlen(token);
+                parsed_msg.params[counter - 1] = malloc(token_size);
                 if (token[0] == ':')
-                    paramIsRest = true;
+                    /* Param takes up the rest of the messsage */
+                    param_is_rest = true;
                 token = strtok(token, ":");
-                strcpy(parsedMsg.params[counter - 1], token);
+                strcpy(parsed_msg.params[counter - 1], token);
             }
             else
             {
-                char *paramSoFar = parsedMsg.params[counter - 1];
-                int concatParamLen = strlen(paramSoFar) + strlen(token) + 1;
-                char *concatParam = malloc(sizeof(char) * concatParamLen);
-                concatParam = strcat(strcat(paramSoFar, " "), token);
-                free(parsedMsg.params[counter-1]);
-                parsedMsg.params[counter - 1] = malloc(sizeof(char) * concatParamLen);
-                strcpy(parsedMsg.params[counter - 1], concatParam);
+                /* Param takes up rest of message */
+                /* Accumulate the rest of param into params[counter - 1] */
+                char *param_so_far = parsed_msg.params[counter - 1];
+                int concat_param_len = strlen(param_so_far) + strlen(token) + 1;
+                char *concat_param = malloc(sizeof(char) * concat_param_len);
+                concat_param = strcat(strcat(param_so_far, " "), token);
+                free(parsed_msg.params[counter - 1]);
+                size_t new_param_size = sizeof(char) * concat_param_len;
+                parsed_msg.params[counter - 1] = malloc(new_param_size);
+                strcpy(parsed_msg.params[counter - 1], concat_param);
             }
         }
 
-        if (!paramIsRest) {
+        if (!param_is_rest)
+        {
+            /* Counter only increments when param does not take up the rest of
+            the message */
             counter++;
         }
     }
 
-    parsedMsg.numParams = counter;
+    parsed_msg.num_params = counter;
 
-    return parsedMsg;
+    return parsed_msg;
 }
 
-void exec_msg(int clientSocket, client_info **clients, char *clientHostname, char *serverHostname, cmd_t msg)
+void exec_msg(
+    int client_socket,
+    client_info_t **clients,
+    char *client_hostname,
+    char *server_hostname,
+    cmd_t msg)
 {
     /* Execute parsed message */
-    char *replyCode = malloc(sizeof(char) * 3);
-    client_info *client = get_client_info(clientHostname, clients);
+    char *reply_code = malloc(sizeof(char) * 3);
+    /* Get client data from hashtable. Return NULL if client is not found */
+    client_info_t *client = get_client_info(client_hostname, clients);
+
     if (sameStr(msg.command, "NICK"))
     {
+        /* Command == "NICK" */
         char *nick = msg.params[0];
         if (client == NULL)
         {
-            /* NICK == first command */
-            client_info *new_client = malloc(sizeof(client_info));
+            /* NICK is the first command from client */
+            client_info_t *new_client = malloc(sizeof(client_info_t));
+            /* Populate new client's struct */
             new_client->info.nick = malloc(sizeof(char) * strlen(nick));
             strcpy(new_client->info.nick, nick);
-            new_client->hostname = malloc(sizeof(char) * strlen(clientHostname));
-            strcpy(new_client->hostname, clientHostname);
+            size_t client_hostname_len = strlen(client_hostname);
+            new_client->hostname = malloc(sizeof(char) * client_hostname_len);
+            strcpy(new_client->hostname, client_hostname);
             new_client->info.username = NULL;
             new_client->info.realname = NULL;
+            /* Add new client to clients hashtable */
             add_client(new_client, clients);
         }
         else
         {
-            /* NICK == second command */
+            /* NICK is called after USER command */
+            /* Update client's nick */
             client->info.nick = malloc(sizeof(char) * strlen(nick));
             strcpy(client->info.nick, nick);
             if (client->info.username != NULL)
             {
-                strcpy(replyCode, RPL_WELCOME);
+                /* Client has already called the USER command */
+                strcpy(reply_code, RPL_WELCOME);
                 send_welcome(
-                    clientSocket,
-                    replyCode,
-                    clientHostname,
-                    serverHostname,
+                    client_socket,
+                    reply_code,
+                    client_hostname,
+                    server_hostname,
                     client->info.username,
                     client->info.nick);
             }
@@ -218,38 +253,46 @@ void exec_msg(int clientSocket, client_info **clients, char *clientHostname, cha
     }
     else if (sameStr(msg.command, "USER"))
     {
+        /* Command == "USER" */
         char *username = msg.params[0];
         char *realname = msg.params[3];
         if (client != NULL)
         {
-            /* USER == second command */
+            /* USER is called after NICK command */
+            /* Update client's username and real name */
             client->info.username = malloc(sizeof(char) * strlen(username));
             client->info.realname = malloc(sizeof(char) * strlen(realname));
             strcpy(client->info.username, username);
             strcpy(client->info.realname, realname);
             if (client->info.nick != NULL)
             {
-                strcpy(replyCode, RPL_WELCOME);
+                /* Client has already called the NICK command */
+                strcpy(reply_code, RPL_WELCOME);
                 send_welcome(
-                    clientSocket,
-                    replyCode,
-                    clientHostname,
-                    serverHostname,
+                    client_socket,
+                    reply_code,
+                    client_hostname,
+                    server_hostname,
                     username,
                     client->info.nick);
             }
         }
         else
         {
-            /* USER == first command */
-            client_info *new_client = malloc(sizeof(client_info));
-            new_client->info.username = malloc(sizeof(char) * strlen(username));
+            /* USER is the first command from client */
+            client_info_t *new_client = malloc(sizeof(client_info_t));
+            /* Populate new client's struct */
+            size_t username_size = sizeof(char) * strlen(username);
+            new_client->info.username = malloc(username_size);
             strcpy(new_client->info.username, username);
-            new_client->info.realname = malloc(sizeof(char) * strlen(realname));
+            size_t realname_size = sizeof(char) * strlen(realname);
+            new_client->info.realname = malloc(realname_size);
             strcpy(new_client->info.realname, realname);
-            new_client->hostname = malloc(sizeof(char) * strlen(clientHostname));
-            strcpy(new_client->hostname, clientHostname);
+            size_t hostname_size = sizeof(char) * strlen(client_hostname);
+            new_client->hostname = malloc(hostname_size);
+            strcpy(new_client->hostname, client_hostname);
             new_client->info.nick = NULL;
+            /* Add new client to clients' hashtable */
             add_client(new_client, clients);
         }
     }
