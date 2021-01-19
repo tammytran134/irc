@@ -39,9 +39,9 @@ typedef struct cmd {
 
 /* This struct holds information about a user's registration information */
 typedef struct nick_info {
-    char *nick; // user's nick
-    char *username; // user's username
-    char *realname; // user's realname
+    char *nick;
+    char *username;
+    char *realname;
 } nick_info_t;
 
 /* This struct is a hashtable whose key is the client's hostname
@@ -50,8 +50,8 @@ typedef struct nick_info {
  */
 typedef struct client_info
 {
-    char *hostname; // key for hashtable
-    nick_info_t info; // value for hashtable
+    char *hostname; /* key for hashtable */
+    nick_info_t info; /* value for hashtable */
     UT_hash_handle hh;  /* makes this struct hashable */
 } client_info_t;
 
@@ -65,9 +65,6 @@ void add_client(client_info_t *c, client_info_t **clients);
 client_info_t* get_client_info(char *hostname, client_info_t **clients);
 
 /* IRC server's message handler helper functions */
-
-/* compare 2 strings and return boolean */
-bool sameStr(char *s1, char *s2);
 
 /* This function takes in data received from the buffer
  * and assemble it into separate commands
