@@ -268,10 +268,8 @@ int main(int argc, char *argv[])
     while(1)
     {
         client_socket = accept(server_socket, (struct sockaddr *) client_addr, &sin_size);
-        // có lỗi segfault và recv vs serverHostname
-        char *serverHostname;
-        serverHostname = "tammy";
-        //gethostname(serverHostname, sizeof serverHostname);
+        char serverHostname[100];
+        gethostname(serverHostname, sizeof serverHostname);
         while (!(rmsg.NICK && rmsg.USER))
         {
             if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1) 
@@ -283,11 +281,9 @@ int main(int argc, char *argv[])
             //Here I'm trying to see the data that recv receives
             printf("data being sent is %d\n", numbytes);
             printf ("The string is %s\n", buf);
-            // có lỗi segfault và recv vs getnameinfo
-            char *clientHostname;
-            char service[1024];
-            clientHostname = "tammy2";
-            //getnameinfo((struct sockaddr *) client_addr, sin_size, clientHostname, sizeof clientHostname, service, sizeof service, 0);
+            char clientHostname[100];
+            char service[100];
+            getnameinfo((struct sockaddr *) client_addr, sin_size, clientHostname, sizeof clientHostname, service, sizeof service, 0);
             rmsg = recv_msg(buf, rmsg, client_socket, clientHostname, serverHostname);
         }
     }
