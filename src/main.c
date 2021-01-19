@@ -73,9 +73,8 @@ msg_t recv_msg (
         if (rmsg.counter == 512) {
             char copy_msg[512];
             strcpy(copy_msg, rmsg.msg);
-            //exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
-            // chị thử send hẳn complete message để xem function có work k
             // send(client_socket, copy_msg, strlen(copy_msg), 0);
+            exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
             char *new_msg = (char *)malloc(sizeof(char) * 512);
             rmsg.msg = new_msg;
             rmsg.counter = 0;
@@ -102,8 +101,8 @@ msg_t recv_msg (
                 if (rmsg.msg[rmsg.counter-1] == '\r') {
                     char copy_msg[strlen(rmsg.msg)];
                     strcpy(copy_msg, rmsg.msg);
-                    //exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
                     // send(client_socket, copy_msg, strlen(copy_msg), 0);
+                    exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
                     char *new_msg = (char *) malloc (sizeof (char) * 512);
                     rmsg.msg = new_msg;
                     rmsg.counter = 0;
@@ -281,9 +280,12 @@ int main(int argc, char *argv[])
             //Here I'm trying to see the data that recv receives
             printf("data being sent is %d\n", numbytes);
             printf ("The string is %s\n", buf);
-            char clientHostname[100];
-            char service[100];
-            getnameinfo((struct sockaddr *) client_addr, sin_size, clientHostname, sizeof clientHostname, service, sizeof service, 0);
+            char clientHostname[1024];
+            char service[1024];
+            int result = getnameinfo((struct sockaddr *) client_addr, sin_size, clientHostname, sizeof clientHostname, service, sizeof service, 0);
+            if (result == 0) {
+                printf("client host name: %s\n", clientHostname);
+            }
             rmsg = recv_msg(buf, rmsg, client_socket, clientHostname, serverHostname);
         }
     }

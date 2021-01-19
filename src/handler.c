@@ -35,7 +35,7 @@ void send_welcome(
     char *username,
     char *nick)
 {
-    char *replyMsg;
+    char *replyMsg = malloc(sizeof(char) * 1024);
     sprintf(replyMsg,
             "%s %s %s :Welcome to the Internet Relay Network %s!%s@%s\r\n",
             serverHostname,
@@ -60,7 +60,7 @@ cmd_t parse_msg(char *msgBuffer)
     parsedMsg.numParams = 0;
     int counter = 0;
     bool paramIsRest = false;
-    while ((token = strtok_r(rest, " \r\n", &rest)))
+    while ((token = strtok_r(rest, " \t\r\n", &rest)))
     {
         // printf("counter: %d\n", counter);
         if (counter == 0)
@@ -110,24 +110,28 @@ cmd_t parse_msg(char *msgBuffer)
 void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, cmd_t msg)
 {
     /* Execute parsed message */
-    char *replyMsg;
-    char *replyCode;
+    char *replyCode = malloc(sizeof(char) * 3);
     client_info *client = get_client_info(clientHostname);
     if (sameStr(msg.command, "NICK"))
     {
+        printf("Command == NICK\n");
         char *nick = msg.params[0];
         if (client == NULL)
         {
             /* NICK == first command */
+            printf("NICK is 1st command\n");
             client_info *new_client = malloc(sizeof(client_info));
+            new_client->info.nick = malloc(sizeof(char) * strlen(nick));
             strcpy(new_client->info.nick, nick);
-            strcpy(new_client->info.realname, NULL);
-            strcpy(new_client->info.username, NULL);
+            new_client->hostname = malloc(sizeof(char) * strlen(clientHostname));
+            strcpy(new_client->hostname, clientHostname);
             add_client(new_client);
         }
         else
         {
             /* NICK == second command */
+            printf("NICK is 2nd command\n");
+            client->info.nick = malloc(sizeof(char) * strlen(nick));
             strcpy(client->info.nick, nick);
             if (client->info.username != NULL)
             {
@@ -144,18 +148,23 @@ void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, cmd_
     }
     else if (sameStr(msg.command, "USER"))
     {
-        char *username;
-        strcpy(username, msg.params[0]);
-        char *realname;
-        strcpy(realname, msg.params[3]);
+        printf("Command == USER\n");
+        char *username = msg.params[0];
+        char *realname = msg.params[3];
         if (client != NULL)
         {
-            /* USER == second name */
+            /* USER == second command */
+            printf("USER is 2nd command\n");
+            client->info.username = malloc(sizeof(char) * strlen(username));
+            client->info.realname = malloc(sizeof(char) * strlen(realname));
             strcpy(client->info.username, username);
             strcpy(client->info.realname, realname);
+            printf("break1\n");
             if (client->info.nick != NULL)
             {
+                printf("break2\n");
                 strcpy(replyCode, RPL_WELCOME);
+                printf("break3\n");
                 send_welcome(
                     clientSocket,
                     replyCode,
@@ -163,16 +172,23 @@ void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, cmd_
                     serverHostname,
                     username,
                     client->info.nick);
+                printf("break4\n");
             }
         }
         else
         {
             /* USER == first command */
+            printf("USER is 1st command\n");
             client_info *new_client = malloc(sizeof(client_info));
-            strcpy(new_client->info.nick, NULL);
-            strcpy(new_client->info.realname, realname);
+            new_client->info.username = malloc(sizeof(char) * strlen(username));
             strcpy(new_client->info.username, username);
+            new_client->info.realname = malloc(sizeof(char) * strlen(realname));
+            strcpy(new_client->info.realname, realname);
+            new_client->hostname = malloc(sizeof(char) * strlen(clientHostname));
+            strcpy(new_client->hostname, clientHostname);
+            printf("break5\n");
             add_client(new_client);
+            printf("break6\n");
         }
     }
 
