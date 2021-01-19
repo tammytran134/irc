@@ -66,7 +66,7 @@ typedef struct msg
 msg_t recv_msg(
     char *buf,
     msg_t rmsg,
-    client_info *clients_hashtable,
+    client_info **clients,
     int client_socket,
     char *clientHostname,
     char *serverHostname)
@@ -80,7 +80,7 @@ msg_t recv_msg(
             char copy_msg[MAX_MSG_LEN];
             strcpy(copy_msg, rmsg.msg);
             // send(client_socket, copy_msg, strlen(copy_msg), 0);
-            exec_msg(client_socket, clients_hashtable, clientHostname, serverHostname, parse_msg(copy_msg));
+            exec_msg(client_socket, clients, clientHostname, serverHostname, parse_msg(copy_msg));
             char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
             rmsg.msg = new_msg;
             rmsg.counter = 0;
@@ -111,7 +111,7 @@ msg_t recv_msg(
                     char copy_msg[strlen(rmsg.msg)];
                     strcpy(copy_msg, rmsg.msg);
                     // send(client_socket, copy_msg, strlen(copy_msg), 0);
-                    exec_msg(client_socket, clients_hashtable, clientHostname, serverHostname, parse_msg(copy_msg));
+                    exec_msg(client_socket, clients, clientHostname, serverHostname, parse_msg(copy_msg));
                     char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
                     rmsg.msg = new_msg;
                     rmsg.counter = 0;
@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
                 port,
                 sizeof port,
                 0);
-            rmsg = recv_msg(buf, rmsg, clients_hashtable, client_socket, hostname, serverHostname);
+            rmsg = recv_msg(buf, rmsg, &clients_hashtable, client_socket, hostname, serverHostname);
         }
     }
 
