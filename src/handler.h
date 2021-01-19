@@ -5,6 +5,17 @@
 #include <stdbool.h>
 
 #define MAX_PARAMS  15
+#define MAX_MSG_LEN 512
+#define MAX_STR_LEN 1024
+
+typedef struct msg
+{
+    char *msg;
+    int counter;
+    bool NICK;
+    bool USER;
+} msg_t;
+
 typedef struct nick_info_struct {
     char *nick;
     char *username;
@@ -30,6 +41,8 @@ typedef struct cmd {
 
 /* IRC server's message handler helper functions */
 bool sameStr(char *s1, char *s2);
+msg_t recv_msg(char *buf, msg_t rmsg, client_info **clients,
+    int client_socket, char *clientHostname, char *serverHostname);
 cmd_t parse_msg(char *buffer);
 void exec_msg(int clientSocket, client_info **clients, char *clientHostname, char *serverHostname, cmd_t msg);
 

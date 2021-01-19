@@ -47,6 +47,88 @@ void send_welcome(
     return;
 }
 
+msg_t recv_msg(
+    char *buf,
+    msg_t rmsg,
+    client_info **clients,
+    int client_socket,
+    char *clientHostname,
+    char *serverHostname)
+{
+    char c;
+    for (int i = 0; i < strlen(buf); i++)
+    {
+        c = buf[i];
+        if (rmsg.counter == MAX_MSG_LEN)
+        {
+            char copy_msg[MAX_MSG_LEN];
+            strcpy(copy_msg, rmsg.msg);
+            // send(client_socket, copy_msg, strlen(copy_msg), 0);
+            exec_msg(client_socket, clients, clientHostname, serverHostname, parse_msg(copy_msg));
+            char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
+            rmsg.msg = new_msg;
+            rmsg.counter = 0;
+            cmd_t cmd = parse_msg(copy_msg);
+            if (rmsg.NICK == false)
+            {
+                if (sameStr(cmd.command, "NICK"))
+                {
+                    rmsg.NICK = true;
+                }
+            }
+            if (rmsg.USER == false)
+            {
+                if (sameStr(cmd.command, "USER"))
+                {
+                    rmsg.USER = true;
+                }
+            }
+            return rmsg;
+        }
+        else
+        {
+            rmsg.msg[rmsg.counter] = c;
+            if (c == '\n')
+            {
+                if (rmsg.msg[rmsg.counter - 1] == '\r')
+                {
+                    char copy_msg[strlen(rmsg.msg)];
+                    strcpy(copy_msg, rmsg.msg);
+                    // send(client_socket, copy_msg, strlen(copy_msg), 0);
+                    exec_msg(client_socket, clients, clientHostname, serverHostname, parse_msg(copy_msg));
+                    char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
+                    rmsg.msg = new_msg;
+                    rmsg.counter = 0;
+                    cmd_t cmd = parse_msg(copy_msg);
+                    if (rmsg.NICK == false)
+                    {
+                        if (sameStr(cmd.command, "NICK"))
+                        {
+                            rmsg.NICK = true;
+                        }
+                    }
+                    if (rmsg.USER == false)
+                    {
+                        if (sameStr(cmd.command, "USER"))
+                        {
+                            rmsg.USER = true;
+                        }
+                    }
+                }
+                else
+                {
+                    rmsg.counter++;
+                }
+            }
+            else
+            {
+                rmsg.counter++;
+            }
+        }
+    }
+    return rmsg;
+}
+
 cmd_t parse_msg(char *msgBuffer)
 {
     /* Parse command from message buffer into command struct */
