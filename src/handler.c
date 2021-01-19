@@ -114,6 +114,8 @@ void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, cmd_
             strcpy(new_client->info.nick, nick);
             new_client->hostname = malloc(sizeof(char) * strlen(clientHostname));
             strcpy(new_client->hostname, clientHostname);
+            new_client->info.username = NULL;
+            new_client->info.realname = NULL;
             add_client(new_client);
         }
         else
@@ -145,7 +147,7 @@ void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, cmd_
             client->info.realname = malloc(sizeof(char) * strlen(realname));
             strcpy(client->info.username, username);
             strcpy(client->info.realname, realname);
-            if (!!client->info.nick)
+            if (client->info.nick != NULL)
             {
                 strcpy(replyCode, RPL_WELCOME);
                 send_welcome(
