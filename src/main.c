@@ -52,25 +52,27 @@
 #include "log.h"
 #include "handler.h"
 
-typedef struct msg {
-    char* msg;
+typedef struct msg
+{
+    char *msg;
     int counter;
     bool NICK;
     bool USER;
 } msg_t;
 
-msg_t recv_msg (
-    char* buf, 
-    msg_t rmsg, 
+msg_t recv_msg(
+    char *buf,
+    msg_t rmsg,
     int client_socket,
-    char* clientHostname,
-    char* serverHostname) 
+    char *clientHostname,
+    char *serverHostname)
 {
     char c;
     for (int i = 0; i < strlen(buf); i++)
     {
         c = buf[i];
-        if (rmsg.counter == 512) {
+        if (rmsg.counter == 512)
+        {
             char copy_msg[512];
             strcpy(copy_msg, rmsg.msg);
             // send(client_socket, copy_msg, strlen(copy_msg), 0);
@@ -81,57 +83,63 @@ msg_t recv_msg (
             cmd_t cmd = parse_msg(copy_msg);
             if (rmsg.NICK == false)
             {
-                if (sameStr(cmd.command, "NICK")) {
+                if (sameStr(cmd.command, "NICK"))
+                {
                     rmsg.NICK = true;
                 }
             }
             if (rmsg.USER == false)
             {
-                if (sameStr(cmd.command, "USER")) {
+                if (sameStr(cmd.command, "USER"))
+                {
                     rmsg.USER = true;
                 }
-                
             }
             return rmsg;
         }
-        else 
-        {   
+        else
+        {
             rmsg.msg[rmsg.counter] = c;
-            if (c == '\n') {
-                if (rmsg.msg[rmsg.counter-1] == '\r') {
+            if (c == '\n')
+            {
+                if (rmsg.msg[rmsg.counter - 1] == '\r')
+                {
                     char copy_msg[strlen(rmsg.msg)];
                     strcpy(copy_msg, rmsg.msg);
                     // send(client_socket, copy_msg, strlen(copy_msg), 0);
                     exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
-                    char *new_msg = (char *) malloc (sizeof (char) * 512);
+                    char *new_msg = (char *)malloc(sizeof(char) * 512);
                     rmsg.msg = new_msg;
                     rmsg.counter = 0;
                     cmd_t cmd = parse_msg(copy_msg);
                     if (rmsg.NICK == false)
                     {
-                        if (sameStr(cmd.command, "NICK")) {
+                        if (sameStr(cmd.command, "NICK"))
+                        {
                             rmsg.NICK = true;
                         }
                     }
                     if (rmsg.USER == false)
                     {
-                        if (sameStr(cmd.command, "USER")) {
-                        rmsg.USER = true;
+                        if (sameStr(cmd.command, "USER"))
+                        {
+                            rmsg.USER = true;
                         }
                     }
                 }
-                else {
+                else
+                {
                     rmsg.counter++;
                 }
             }
-            else {
+            else
+            {
                 rmsg.counter++;
             }
         }
     }
     return rmsg;
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -187,7 +195,7 @@ int main(int argc, char *argv[])
     }
 
     /* Set logging level based on verbosity */
-    switch(verbosity)
+    switch (verbosity)
     {
     case -1:
         chirc_setloglevel(QUIET);
@@ -210,7 +218,7 @@ int main(int argc, char *argv[])
     int server_socket;
     int client_socket;
     struct addrinfo hints, *res, *p;
-    struct sockaddr_storage *client_addr;
+    struct sockaddr_storage client_addr;
     socklen_t sin_size = sizeof(struct sockaddr_storage);
     int yes = 1;
     int numbytes;
@@ -222,22 +230,22 @@ int main(int argc, char *argv[])
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE; 
+    hints.ai_flags = AI_PASSIVE;
 
-    if (getaddrinfo(NULL, port, &hints, &res) != 0) 
+    if (getaddrinfo(NULL, port, &hints, &res) != 0)
     {
         perror("getaddrinfo() failed");
         exit(-1);
     }
 
-    for (p = res; p !=NULL; p = p->ai_next)
+    for (p = res; p != NULL; p = p->ai_next)
     {
         if ((server_socket = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
         {
             perror("socketfailed");
             continue;
         }
-        if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) 
+        if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
         {
             perror("setsockopt() failed");
             continue;
@@ -264,29 +272,36 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    while(1)
+    while (1)
     {
-        client_socket = accept(server_socket, (struct sockaddr *) client_addr, &sin_size);
+        client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &sin_size);
         char serverHostname[100];
         gethostname(serverHostname, sizeof serverHostname);
         while (!(rmsg.NICK && rmsg.USER))
         {
-            if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1) 
+            if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1)
             {
                 perror("recv() failed");
                 exit(1);
             }
             buf[numbytes] = '\0';
             //Here I'm trying to see the data that recv receives
-            printf("data being sent is %d\n", numbytes);
-            printf ("The string is %s\n", buf);
-            char clientHostname[1024];
-            char service[1024];
-            int result = getnameinfo((struct sockaddr *) client_addr, sin_size, clientHostname, sizeof clientHostname, service, sizeof service, 0);
-            if (result == 0) {
-                printf("client host name: %s\n", clientHostname);
+            // printf("data being sent is %d\n", numbytes);
+            // printf("The string is %s\n", buf);
+            char hostname[1024];
+            char port[1024];
+            int result = getnameinfo(
+                (struct sockaddr *)&client_addr,
+                sin_size, hostname,
+                sizeof hostname,
+                port,
+                sizeof port,
+                0);
+            if (result == 0)
+            {
+                printf("client host name: %s\n", hostname);
+                rmsg = recv_msg(buf, rmsg, client_socket, hostname, serverHostname);
             }
-            rmsg = recv_msg(buf, rmsg, client_socket, clientHostname, serverHostname);
         }
     }
 
@@ -294,4 +309,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
