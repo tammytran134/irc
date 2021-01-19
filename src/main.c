@@ -75,7 +75,7 @@ msg_t recv_msg (
             strcpy(copy_msg, rmsg.msg);
             //exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
             // chị thử send hẳn complete message để xem function có work k
-            send(client_socket, copy_msg, strlen(copy_msg), 0);
+            // send(client_socket, copy_msg, strlen(copy_msg), 0);
             char *new_msg = (char *)malloc(sizeof(char) * 512);
             rmsg.msg = new_msg;
             rmsg.counter = 0;
@@ -103,7 +103,7 @@ msg_t recv_msg (
                     char copy_msg[strlen(rmsg.msg)];
                     strcpy(copy_msg, rmsg.msg);
                     //exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
-                    send(client_socket, copy_msg, strlen(copy_msg), 0);
+                    // send(client_socket, copy_msg, strlen(copy_msg), 0);
                     char *new_msg = (char *) malloc (sizeof (char) * 512);
                     rmsg.msg = new_msg;
                     rmsg.counter = 0;
