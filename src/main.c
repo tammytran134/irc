@@ -55,7 +55,8 @@
 int main(int argc, char *argv[])
 {
     int opt;
-    char *port = "6667", *passwd = NULL, *servername = NULL, *network_file = NULL;
+    char *port = "6667", *passwd = NULL;
+    char *servername = NULL, *network_file = NULL;
     int verbosity = 0;
 
     while ((opt = getopt(argc, argv, "p:o:s:n:vqh")) != -1)
@@ -133,7 +134,7 @@ int main(int argc, char *argv[])
     socklen_t sin_size = sizeof(struct sockaddr_storage);
     int yes = 1;
     int numbytes;
-    char buf[100];
+    char buf[MAX_BUF_LEN];
     char msg[MAX_MSG_LEN];
     msg_t rmsg = {"", 0, false, false};
     rmsg.msg = msg;
@@ -151,12 +152,15 @@ int main(int argc, char *argv[])
 
     for (p = res; p != NULL; p = p->ai_next)
     {
-        if ((server_socket = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
+        if ((server_socket = socket(p->ai_family, 
+                                    p->ai_socktype, 
+                                    p->ai_protocol)) == -1)
         {
             perror("socketfailed");
             continue;
         }
-        if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+        if (setsockopt(server_socket, SOL_SOCKET, 
+                        SO_REUSEADDR, &yes, sizeof(int)) == -1)
         {
             perror("setsockopt() failed");
             continue;
@@ -184,14 +188,16 @@ int main(int argc, char *argv[])
     }
 
     /* Initialize hashtable of clients' information */
-    client_info *clients_hashtable = NULL;
+    client_info_t *clients_hashtable = NULL;
 
     while (1)
     {
-        client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &sin_size);
-        char serverHostname[100];
-        gethostname(serverHostname, sizeof serverHostname);
-        while (!(rmsg.NICK && rmsg.USER))
+        client_socket = accept(server_socket, 
+                                (struct sockaddr *) &client_addr, 
+                                &sin_size);
+        /* This loop continues to listen and receive message
+         * until client has put in NICK and USER command */
+        while (!(rmsg.nick_cmd && rmsg.user_cmd))
         {
             if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1)
             {
@@ -199,24 +205,24 @@ int main(int argc, char *argv[])
                 exit(1);
             }
             buf[numbytes] = '\0';
-            //Here I'm trying to see the data that recv receives
-            // printf("data being sent is %d\n", numbytes);
-            // printf("The string is %s\n", buf);
+            char server_hostname[MAX_STR_LEN];
+            /* Get name of host server */
+            gethostname(server_hostname, sizeof server_hostname);
             char hostname[MAX_STR_LEN];
             char port[MAX_STR_LEN];
-            int result = getnameinfo(
-                (struct sockaddr *) &client_addr,
-                sin_size, 
-                hostname,
-                sizeof hostname,
-                port,
-                sizeof port,
-                0);
-            rmsg = recv_msg(buf, rmsg, &clients_hashtable, client_socket, hostname, serverHostname);
+            /* Get client's hostname */
+            int result = getnameinfo((struct sockaddr *) &client_addr,
+                                        sin_size, 
+                                        hostname,
+                                        sizeof hostname,
+                                        port,
+                                        sizeof port, 0);
+            /* Send the data received from the buf 
+             * to recv_msg to parse and process */
+            rmsg = recv_msg(buf, rmsg, &clients_hashtable, client_socket, 
+                            hostname, server_hostname);
         }
     }
-
     close(server_socket);
-
     return 0;
 }
