@@ -297,11 +297,11 @@ int main(int argc, char *argv[])
                 port,
                 sizeof port,
                 0);
-            if (result == 0)
-            {
-                printf("client host name: %s\n", hostname);
+            //if (result == 0)
+            //{
+            //    printf("client host name: %s\n", hostname);
                 rmsg = recv_msg(buf, rmsg, client_socket, hostname, serverHostname);
-            }
+            //}
         }
     }
 

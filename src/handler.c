@@ -37,7 +37,7 @@ void send_welcome(
 {
     char *replyMsg = malloc(sizeof(char) * 1024);
     sprintf(replyMsg,
-            "%s %s %s :Welcome to the Internet Relay Network %s!%s@%s\r\n",
+            ":%s %s %s :Welcome to the Internet Relay Network %s!%s@%s\r\n",
             serverHostname,
             replyCode,
             nick,
