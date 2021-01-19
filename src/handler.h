@@ -4,7 +4,7 @@
 #include "uthash.h"
 #include <stdbool.h>
 
-/* A HASHTABLE STORING ACTIVE NICKS' INFORMATION */
+#define MAX_PARAMS  15
 typedef struct nick_info_struct {
     char *nick;
     char *username;
@@ -18,19 +18,19 @@ typedef struct client_info_struct
     UT_hash_handle hh;  /* makes this struct hashable */
 } client_info;
 
-void add_client(client_info *c);
+void add_client(client_info *c, client_info *clients_hashtable);
 
-client_info* get_client_info(char *hostname);
+client_info* get_client_info(char *hostname, client_info *clients_hashtable);
 
 typedef struct cmd {
     char* command;
     int numParams;
-    char *params[15];
+    char *params[MAX_PARAMS];
 } cmd_t;
 
 /* IRC server's message handler helper functions */
 bool sameStr(char *s1, char *s2);
 cmd_t parse_msg(char *buffer);
-void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, cmd_t msg);
+void exec_msg(int clientSocket, client_info *clients_hashtable, char *clientHostname, char *serverHostname, cmd_t msg);
 
 #endif

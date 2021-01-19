@@ -52,6 +52,9 @@
 #include "log.h"
 #include "handler.h"
 
+#define MAX_MSG_LEN 512
+#define MAX_STR_LEN 1024
+
 typedef struct msg
 {
     char *msg;
@@ -63,6 +66,7 @@ typedef struct msg
 msg_t recv_msg(
     char *buf,
     msg_t rmsg,
+    client_info *clients_hashtable,
     int client_socket,
     char *clientHostname,
     char *serverHostname)
@@ -71,13 +75,13 @@ msg_t recv_msg(
     for (int i = 0; i < strlen(buf); i++)
     {
         c = buf[i];
-        if (rmsg.counter == 512)
+        if (rmsg.counter == MAX_MSG_LEN)
         {
-            char copy_msg[512];
+            char copy_msg[MAX_MSG_LEN];
             strcpy(copy_msg, rmsg.msg);
             // send(client_socket, copy_msg, strlen(copy_msg), 0);
-            exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
-            char *new_msg = (char *)malloc(sizeof(char) * 512);
+            exec_msg(client_socket, clients_hashtable, clientHostname, serverHostname, parse_msg(copy_msg));
+            char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
             rmsg.msg = new_msg;
             rmsg.counter = 0;
             cmd_t cmd = parse_msg(copy_msg);
@@ -107,8 +111,8 @@ msg_t recv_msg(
                     char copy_msg[strlen(rmsg.msg)];
                     strcpy(copy_msg, rmsg.msg);
                     // send(client_socket, copy_msg, strlen(copy_msg), 0);
-                    exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
-                    char *new_msg = (char *)malloc(sizeof(char) * 512);
+                    exec_msg(client_socket, clients_hashtable, clientHostname, serverHostname, parse_msg(copy_msg));
+                    char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
                     rmsg.msg = new_msg;
                     rmsg.counter = 0;
                     cmd_t cmd = parse_msg(copy_msg);
@@ -223,7 +227,7 @@ int main(int argc, char *argv[])
     int yes = 1;
     int numbytes;
     char buf[100];
-    char msg[512];
+    char msg[MAX_MSG_LEN];
     msg_t rmsg = {"", 0, false, false};
     rmsg.msg = msg;
 
@@ -272,6 +276,9 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
+    /* Initialize hashtable of clients' information */
+    client_info *clients_hashtable = NULL;
+
     while (1)
     {
         client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &sin_size);
@@ -288,20 +295,17 @@ int main(int argc, char *argv[])
             //Here I'm trying to see the data that recv receives
             // printf("data being sent is %d\n", numbytes);
             // printf("The string is %s\n", buf);
-            char hostname[1024];
-            char port[1024];
+            char hostname[MAX_STR_LEN];
+            char port[MAX_STR_LEN];
             int result = getnameinfo(
-                (struct sockaddr *)&client_addr,
-                sin_size, hostname,
+                (struct sockaddr *) &client_addr,
+                sin_size, 
+                hostname,
                 sizeof hostname,
                 port,
                 sizeof port,
                 0);
-            //if (result == 0)
-            //{
-            //    printf("client host name: %s\n", hostname);
-                rmsg = recv_msg(buf, rmsg, client_socket, hostname, serverHostname);
-            //}
+            rmsg = recv_msg(buf, rmsg, clients_hashtable, client_socket, hostname, serverHostname);
         }
     }
 

@@ -8,14 +8,12 @@
 #include "handler.h"
 #include "reply.h"
 
-client_info *clients_hashtable = NULL;
-
-void add_client(client_info *c)
+void add_client(client_info *c, client_info *clients_hashtable)
 {
     HASH_ADD_STR(clients_hashtable, hostname, c);
 }
 
-client_info *get_client_info(char *hostname)
+client_info *get_client_info(char *hostname, client_info *clients_hashtable)
 {
     client_info *result;
     HASH_FIND_STR(clients_hashtable, hostname, result);
@@ -98,11 +96,11 @@ cmd_t parse_msg(char *msgBuffer)
     return parsedMsg;
 }
 
-void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, cmd_t msg)
+void exec_msg(int clientSocket, client_info *clients_hashtable, char *clientHostname, char *serverHostname, cmd_t msg)
 {
     /* Execute parsed message */
     char *replyCode = malloc(sizeof(char) * 3);
-    client_info *client = get_client_info(clientHostname);
+    client_info *client = get_client_info(clientHostname, clients_hashtable);
     if (sameStr(msg.command, "NICK"))
     {
         char *nick = msg.params[0];
@@ -116,7 +114,7 @@ void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, cmd_
             strcpy(new_client->hostname, clientHostname);
             new_client->info.username = NULL;
             new_client->info.realname = NULL;
-            add_client(new_client);
+            add_client(new_client, clients_hashtable);
         }
         else
         {
@@ -170,7 +168,7 @@ void exec_msg(int clientSocket, char *clientHostname, char *serverHostname, cmd_
             new_client->hostname = malloc(sizeof(char) * strlen(clientHostname));
             strcpy(new_client->hostname, clientHostname);
             new_client->info.nick = NULL;
-            add_client(new_client);
+            add_client(new_client, clients_hashtable);
         }
     }
 
