@@ -67,18 +67,15 @@ msg_t recv_msg (
     char* serverHostname) 
 {
     char c;
-    send(client_socket, "it comes here1\n", 15, 0);
-    printf("it comes here2\n");
     for (int i = 0; i < strlen(buf); i++)
     {
         c = buf[i];
-        printf("it comes here\n");
         if (rmsg.counter == 512) {
             char copy_msg[512];
             strcpy(copy_msg, rmsg.msg);
             //exec_msg(client_socket, clientHostname, serverHostname, parse_msg(copy_msg));
+            // chị thử send hẳn complete message để xem function có work k
             send(client_socket, copy_msg, strlen(copy_msg), 0);
-            //Testcode
             char *new_msg = (char *)malloc(sizeof(char) * 512);
             rmsg.msg = new_msg;
             rmsg.counter = 0;
@@ -223,8 +220,6 @@ int main(int argc, char *argv[])
     msg_t rmsg = {"", 0, false, false};
     rmsg.msg = msg;
 
-    //char *msg = ":bar.example.com 001 user1 :Welcome to the Internet Relay Network user1!user1@foo.example.com\r\n";
-
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -273,6 +268,7 @@ int main(int argc, char *argv[])
     while(1)
     {
         client_socket = accept(server_socket, (struct sockaddr *) client_addr, &sin_size);
+        // có lỗi segfault và recv vs serverHostname
         char *serverHostname;
         serverHostname = "tammy";
         //gethostname(serverHostname, sizeof serverHostname);
@@ -287,7 +283,7 @@ int main(int argc, char *argv[])
             //Here I'm trying to see the data that recv receives
             printf("data being sent is %d\n", numbytes);
             printf ("The string is %s\n", buf);
-            //
+            // có lỗi segfault và recv vs getnameinfo
             char *clientHostname;
             char service[1024];
             clientHostname = "tammy2";
