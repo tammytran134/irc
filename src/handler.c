@@ -81,12 +81,16 @@ cmd_t parse_msg(char *msgBuffer)
             }
             else
             {
+                // printf("BREAK1\n");
                 char *paramSoFar = parsedMsg.params[counter - 1];
                 int concatParamLen = strlen(paramSoFar) + strlen(token) + 1;
                 char *concatParam = malloc(sizeof(char) * concatParamLen);
                 concatParam = strcat(strcat(paramSoFar, " "), token);
+                // printf("BREAK2\n");
+                free(parsedMsg.params[counter-1]);
                 parsedMsg.params[counter - 1] = malloc(sizeof(char) * concatParamLen);
                 strcpy(parsedMsg.params[counter - 1], concatParam);
+                // printf("BREAK3\n");
                 // printf("concat: %s\n", parsedMsg.params[counter - 1]);
             }
         }
