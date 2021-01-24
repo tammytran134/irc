@@ -48,9 +48,14 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <pthread.h>
+#include <signal.h>
+#include <errno.h>
+#include <time.h>
 
 #include "log.h"
-#include "handler.h"
+#include "msg_handler.h"
+#include "server_info.h"
 
 int main(int argc, char *argv[])
 {
@@ -127,17 +132,31 @@ int main(int argc, char *argv[])
     }
 
     /* Your code goes here */
+    
+    /* Initialize hashtable of clients' information */
+    client_info_t *clients_hashtable = NULL;
+    server_ctx_t *ctx = calloc(1, sizeof(server_ctx_t));
+    ctx->num_connections = 0;
+    pthread_mutex_init(&ctx->lock, NULL);
+
+    sigset_t new;
+    sigemptyset (&new);
+    sigaddset(&new, SIGPIPE);
+    if (pthread_sigmask(SIG_BLOCK, &new, NULL) != 0) 
+    {
+        perror("Unable to mask SIGPIPE");
+        exit(-1);
+    }
+
+
     int server_socket;
     int client_socket;
     struct addrinfo hints, *res, *p;
-    struct sockaddr_storage client_addr;
+    struct sockaddr_storage *client_addr;
     socklen_t sin_size = sizeof(struct sockaddr_storage);
     int yes = 1;
-    int numbytes;
-    char buf[MAX_BUF_LEN];
-    char msg[MAX_MSG_LEN];
-    msg_t rmsg = {"", 0, false, false};
-    rmsg.msg = msg;
+    pthread_t worker_thread;
+    worker_args_t (*wa);
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -187,42 +206,70 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    /* Initialize hashtable of clients' information */
-    client_info_t *clients_hashtable = NULL;
-
     while (1)
-    {
+    {   
+        client_addr = calloc(1, sin_size);
         client_socket = accept(server_socket, 
-                                (struct sockaddr *) &client_addr, 
+                                (struct sockaddr *) client_addr, 
                                 &sin_size);
-        /* This loop continues to listen and receive message
-         * until client has put in NICK and USER command */
-        while (!(rmsg.nick_cmd && rmsg.user_cmd))
+        if (client_socket == -1) 
         {
-            if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1)
-            {
-                perror("recv() failed");
-                exit(1);
-            }
-            buf[numbytes] = '\0';
-            char server_hostname[MAX_STR_LEN];
-            /* Get name of host server */
-            gethostname(server_hostname, sizeof server_hostname);
-            char hostname[MAX_STR_LEN];
-            char port[MAX_STR_LEN];
-            /* Get client's hostname */
-            int result = getnameinfo((struct sockaddr *) &client_addr,
-                                        sin_size, 
-                                        hostname,
-                                        sizeof hostname,
-                                        port,
-                                        sizeof port, 0);
-            /* Send the data received from the buf 
-             * to recv_msg to parse and process */
-            rmsg = recv_msg(buf, rmsg, &clients_hashtable, client_socket, 
-                            hostname, server_hostname);
+            free(client_addr);
+            perror("Could not accept() connection");
+            continue;
+        }
+
+        wa = calloc(1, sizeof(worker_args_t));
+        wa->socket = client_socket;
+        wa->ctx = ctx;
+        wa->clients_hashtable = clients_hashtable;
+
+        if (pthread_create(&worker_thread, NULL, service_single_client, wa) != 0)
+        {
+            perror("Could not create a worker thread");
+            free(client_addr);
+            free(wa);
+            close(client_socket);
+            close(server_socket);
+            return EXIT_FAILURE;
         }
     }
     close(server_socket);
-    return 0;
+    /* ADDED: Destroy the lock */
+    pthread_mutex_destroy(&ctx->lock);
+    free(ctx);
+
+    return EXIT_SUCCESS;
 }
+    
+//         /* This loop continues to listen and receive message
+//          * until client has put in NICK and USER command */
+//         while (!(rmsg.nick_cmd && rmsg.user_cmd))
+//         {
+//             if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1)
+//             {
+//                 perror("recv() failed");
+//                 exit(1);
+//             }
+//             buf[numbytes] = '\0';
+//             char server_hostname[MAX_STR_LEN];
+//             /* Get name of host server */
+//             gethostname(server_hostname, sizeof server_hostname);
+//             char hostname[MAX_STR_LEN];
+//             char port[MAX_STR_LEN];
+//             /* Get client's hostname */
+//             int result = getnameinfo((struct sockaddr *) &client_addr,
+//                                         sin_size, 
+//                                         hostname,
+//                                         sizeof hostname,
+//                                         port,
+//                                         sizeof port, 0);
+//             /* Send the data received from the buf 
+//              * to recv_msg to parse and process */
+//             rmsg = recv_msg(buf, rmsg, &clients_hashtable, client_socket, 
+//                             hostname, server_hostname);
+//         }
+//     }
+//     close(server_socket);
+//     return 0;
+// }
