@@ -57,6 +57,47 @@
 #include "msg_handler.h"
 #include "server_info.h"
 
+void *service_single_client(void *args) {
+    worker_args_t *wa;
+    server_ctx_t *ctx;
+    client_info_t *clients_hashtable;
+    int client_socket;
+    int numbytes;
+    char buf[MAX_BUF_LEN];
+    char msg[MAX_MSG_LEN];
+    char *client_hostname;
+    msg_t rmsg = {"", 0, false, false};
+    rmsg.msg = msg;
+
+    wa = (struct worker_args*) args;
+    client_socket = wa->socket;
+    client_hostname = wa->client_hostname;
+    ctx = wa->ctx;
+    clients_hashtable = ctx->clients_hashtable;
+
+    pthread_detach(pthread_self());
+            /* This loop continues to listen and receive message
+         * until client has put in NICK and USER command */
+    while (!(rmsg.nick_cmd && rmsg.user_cmd))
+    {
+        if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1)
+        {
+            perror("recv() failed");
+            exit(1);
+        }
+        buf[numbytes] = '\0';
+        /* Get name of host server */
+        char server_hostname[MAX_STR_LEN];
+        gethostname(server_hostname, sizeof server_hostname);
+        /* Send the data received from the buf 
+         * to recv_msg to parse and process */
+        rmsg = recv_msg(buf, rmsg, &clients_hashtable, client_socket, 
+                        client_hostname, server_hostname);
+    }
+    close(client_socket);
+    pthread_exit(NULL);
+}
+
 int main(int argc, char *argv[])
 {
     int opt;
@@ -137,6 +178,7 @@ int main(int argc, char *argv[])
     client_info_t *clients_hashtable = NULL;
     server_ctx_t *ctx = calloc(1, sizeof(server_ctx_t));
     ctx->num_connections = 0;
+    ctx->clients_hashtable = clients_hashtable;
     pthread_mutex_init(&ctx->lock, NULL);
 
     sigset_t new;
@@ -219,10 +261,20 @@ int main(int argc, char *argv[])
             continue;
         }
 
+        /* Get client's hostname */
+        char client_hostname[MAX_STR_LEN];
+        char port[MAX_STR_LEN];
+        int result = getnameinfo((struct sockaddr *) &client_addr,//check
+                                    sin_size, 
+                                    client_hostname,
+                                    sizeof client_hostname,
+                                    port,
+                                    sizeof port, 0);
+
         wa = calloc(1, sizeof(worker_args_t));
         wa->socket = client_socket;
+        wa->client_hostname = client_hostname;
         wa->ctx = ctx;
-        wa->clients_hashtable = clients_hashtable;
 
         if (pthread_create(&worker_thread, NULL, service_single_client, wa) != 0)
         {
@@ -241,35 +293,3 @@ int main(int argc, char *argv[])
 
     return EXIT_SUCCESS;
 }
-    
-//         /* This loop continues to listen and receive message
-//          * until client has put in NICK and USER command */
-//         while (!(rmsg.nick_cmd && rmsg.user_cmd))
-//         {
-//             if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1)
-//             {
-//                 perror("recv() failed");
-//                 exit(1);
-//             }
-//             buf[numbytes] = '\0';
-//             char server_hostname[MAX_STR_LEN];
-//             /* Get name of host server */
-//             gethostname(server_hostname, sizeof server_hostname);
-//             char hostname[MAX_STR_LEN];
-//             char port[MAX_STR_LEN];
-//             /* Get client's hostname */
-//             int result = getnameinfo((struct sockaddr *) &client_addr,
-//                                         sin_size, 
-//                                         hostname,
-//                                         sizeof hostname,
-//                                         port,
-//                                         sizeof port, 0);
-//             /* Send the data received from the buf 
-//              * to recv_msg to parse and process */
-//             rmsg = recv_msg(buf, rmsg, &clients_hashtable, client_socket, 
-//                             hostname, server_hostname);
-//         }
-//     }
-//     close(server_socket);
-//     return 0;
-// }

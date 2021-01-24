@@ -1,5 +1,5 @@
-#ifndef CHIRC_HANDLER_H_
-#define CHIRC_HANDLER_H_
+#ifndef CHIRC_MSG_HANDLER_H_
+#define CHIRC_MSG_HANDLER_H_
 
 #include <stdbool.h>
 #include "server_info.h"
@@ -32,6 +32,7 @@ typedef struct cmd {
     char *params[MAX_PARAMS];
 } cmd_t;
 
+bool sameStr(char *s1, char *s2);
 
 /* IRC server's message handler helper functions */
 
