@@ -220,6 +220,7 @@ void exec_cmd(cmd_t full_cmd)
     for (i = 0; i < num_handlers; i++) 
     {
         // check for ERR_UNREGISTERED error NEED A VARIABLE TO CHECK IF A USER IS REGISTERED********
+        //*********** NEED TO THINK OF A STRUCT TO HOLD SERVER_INFO
         if (sameStr(cmd, handlers[i].name)) {
             handlers[i].func(full_cmd);
             break;
