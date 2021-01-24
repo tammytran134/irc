@@ -26,12 +26,8 @@ typedef struct handler_entry
 
 #define NICK_PAM 1
 #define USER_PAM 4             
-
-
-#define LIST_PAM_MIN 0             
-#define LIST_PAM_MAX 1   
-
-#define MODE_PAM 3    
+#define JOIN_PAM 1 
+ 
 #define OPER_PAM 2                 
 
 #endif

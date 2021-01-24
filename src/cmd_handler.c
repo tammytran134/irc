@@ -44,7 +44,7 @@ bool check_cmd(int input, int standard, char *operator)
     }
 }
 
-int handler_NICK(server_info_t, cmd_t cmd) 
+int handler_NICK(cmd_t cmd) 
 {
     if (!(check_cmd(cmd.num_params, NICK_PAM, "==")))
     {
@@ -60,6 +60,7 @@ int handler_NICK(server_info_t, cmd_t cmd)
             // have to check for cases when NICK is first command, second command
             //change the user info 
             // if the user is registered send reply
+            // if the user is already there, relay messages to all channels
         //}
     }
 
@@ -94,20 +95,36 @@ int handler_QUIT(cmd_t cmd)
 
 int handler_JOIN(cmd_t cmd)
 {
-    // if not registered
-    // send ERR_NOTREGISTERED
+    if (!(check_cmd(cmd.num_params, JOIN_PAM, "==")))
+    {
+        // NEEDMOREPARAMS
+    }
+    // else
+    // if channel exists
+    // reply RPL_NAMREPLY and RPL_ENDOFNAMES: list of users on channels
+    // relay message to all members of channel and user
+    // if doesnt create channel 
+    // reply RPL_NAMREPLY and RPL_ENDOFNAMES
+    // relay message to all members of channel and user
     return 0;
 }
 
 int handler_PRIVMSG(cmd_t cmd)
 {
+
     // if no name of recipient is identified
     // send ERR_NOSUCHNICK
     // if no text with prefix is sent
     // send ERR_NOTEXTTOSEND
     // if no name of recipient is input
     // send ERR_NORECIPIENT
+
+    // user-to-user
     // identify the recipient and his socket
+
+    // user to channel
+    // if send messages to channel they are not in: ERR_CANNOTSENDTOCHAN
+    // relay message to all users of channels
     return 0;
 }
 
@@ -120,27 +137,42 @@ int handler_NOTICE(cmd_t cmd)
 
 int handler_LIST(cmd_t cmd)
 {
-    if ((!(check_cmd(cmd.num_params, LIST_PAM_MAX, "<="))) || (!(check_cmd(cmd.num_params, LIST_PAM_MIN, ">="))))
-    {
-        // error WRONGPARAM
-    }
+    // if no params, list all channels
+    // if one param: list the channel
+    // reply RPL_LIST channel and no of users
+    // RPL_LISTEND
     return 0;
 }
 
 int handler_MODE(cmd_t cmd)
 {
-    if (!(check_cmd(cmd.num_params, MODE_PAM, "==")))
-    {
-        // error WRONGPARAM
-    }
+    // if only channel is provided
+    // ERR_NOSUCHCHANNEL
+
+    // ERR_CHANOPRIVSNEEDED you are not operator
+
+    // if mode is unknown
+    // ERR_UNKNOWNMODE
+
+    // user not in 
+    // ERR_USERNOTINCHANNEL
+    // if successful
+    // relay back to all users
     return 0;
 }
 int handler_OPER(cmd_t cmd)
 {
     if (!(check_cmd(cmd.num_params, OPER_PAM, "==")))
     {
-        // error WRONGPARAM
+        // error NEEDMOREPARAMS
     }
+    // MUST HAVE INFORMATION ON PASSWORD****************
+    // if password mismatch
+    // ERR_PASSWDMISMATCH
+
+    // if correct
+    // RPL_YOUREOPER
+
     return 0;
 }
 
@@ -187,6 +219,7 @@ void exec_cmd(cmd_t full_cmd)
     int i;
     for (i = 0; i < num_handlers; i++) 
     {
+        // check for ERR_UNREGISTERED error NEED A VARIABLE TO CHECK IF A USER IS REGISTERED********
         if (sameStr(cmd, handlers[i].name)) {
             handlers[i].func(full_cmd);
             break;
