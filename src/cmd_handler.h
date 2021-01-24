@@ -25,26 +25,14 @@ typedef struct handler_entry
 } handler_entry_t;
 
 #define NICK_PAM 1
-#define USER_PAM 4   
+#define USER_PAM 4             
 
-#define QUIT_PAM_MIN 0     
-#define QUIT_PAM_MAX 1 
-
-#define JOIN_PAM_MIN 1          
-#define JOIN_PAM_MAX 15              
-
-#define PRIVMSG_PAM 2       
-#define NOTICE_PAM 2
 
 #define LIST_PAM_MIN 0             
 #define LIST_PAM_MAX 1   
 
 #define MODE_PAM 3    
-#define OPER_PAM 2            
-
-#define PING_PAM 0                
-#define PONG_PAM 0  
-#define LUSERS_PAM 0         
+#define OPER_PAM 2                 
 
 #endif
 

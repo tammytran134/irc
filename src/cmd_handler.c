@@ -44,12 +44,25 @@ bool check_cmd(int input, int standard, char *operator)
     }
 }
 
-int handler_NICK(cmd_t cmd) 
+int handler_NICK(server_info_t, cmd_t cmd) 
 {
     if (!(check_cmd(cmd.num_params, NICK_PAM, "==")))
     {
-        // error WRONGPARAM
+        //reply(ERR_NONICKNAMEGIVEN);
     }
+    else
+    {
+        // if cmd.params[0] is already in hash table nick
+        // throw ERR_NICKNAMEINUSE
+        // else 
+        //{
+            //client_info_t *client = get_client_info(client_hostname, ctx->clients_hashtable);
+            // have to check for cases when NICK is first command, second command
+            //change the user info 
+            // if the user is registered send reply
+        //}
+    }
+
     return 0;
 }
 
@@ -57,44 +70,51 @@ int handler_USER(cmd_t cmd)
 {
     if (!(check_cmd(cmd.num_params, USER_PAM, "==")))
     {
-        // error WRONGPARAM
+        // NEEDMOREPARAMS
+    }
+    else
+    {
+        //if already register - check the hashtable
+        // ERR_ALREADYREGISTRED
+        //
+        //else
+        //fill in the detail
+        // if registered send reply
     }
     return 0;
 } 
 
 int handler_QUIT(cmd_t cmd)
 {
-    if ((!(check_cmd(cmd.num_params, QUIT_PAM_MAX, "<="))) || (!(check_cmd(cmd.num_params, QUIT_PAM_MIN, ">="))))
-    {
-        // error WRONGPARAM
-    }
+        // send closing link hostname, msg
+        // remove user from all hash tables - channels, systems
+        // relay back to the channels that the users are in
     return 0;
 }
 
 int handler_JOIN(cmd_t cmd)
 {
-    if ((!(check_cmd(cmd.num_params, JOIN_PAM_MAX, "<="))) || (!(check_cmd(cmd.num_params, JOIN_PAM_MIN, ">="))))
-    {
-        // error WRONGPARAM
-    }
+    // if not registered
+    // send ERR_NOTREGISTERED
     return 0;
 }
 
 int handler_PRIVMSG(cmd_t cmd)
 {
-    if (!(check_cmd(cmd.num_params, PRIVMSG_PAM, "==")))
-    {
-        // error WRONGPARAM
-    }
+    // if no name of recipient is identified
+    // send ERR_NOSUCHNICK
+    // if no text with prefix is sent
+    // send ERR_NOTEXTTOSEND
+    // if no name of recipient is input
+    // send ERR_NORECIPIENT
+    // identify the recipient and his socket
     return 0;
 }
 
 int handler_NOTICE(cmd_t cmd)
 {
-    if (!(check_cmd(cmd.num_params, NOTICE_PAM, "==")))
-    {
-        // error WRONGPARAM
-    }
+    // identify errors but don't reply
+    // send messages if success
     return 0;
 }
 
@@ -126,29 +146,23 @@ int handler_OPER(cmd_t cmd)
 
 int handler_PING(cmd_t cmd)
 {
-    if (!(check_cmd(cmd.num_params, PING_PAM, "==")))
-    {
-        // error WRONGPARAM
-    }
+    // send pong message to client
     return 0;
 }
 
 int handler_PONG(cmd_t cmd)
 {
-    if (!(check_cmd(cmd.num_params, PONG_PAM, "==")))
-    {
-        // error WRONGPARAM
-    }
     // do nothing
     return 0;
 }
 
 int handler_LUSERS(cmd_t cmd)
 {
-    if (!(check_cmd(cmd.num_params, LUSERS_PAM, "==")))
-    {
-        // error WRONGPARAM
-    }
+    //RPL_LUSERCLIENT, those who have put in both nick and user
+    //RPL_LUSEROP, 
+    //RPL_LUSERUNKNOWN: haven't received any nick or user **
+    //RPL_LUSERCHANNELS, 
+    //RPL_LUSERME: connections, excluding unknown ones **
     return 0;
 }
 
@@ -180,6 +194,6 @@ void exec_cmd(cmd_t full_cmd)
     }
     if (i == num_handlers)
     {
-        // throw unknown command
+        // send ERR_UNKNOWNCOMMAND
     }
 }
