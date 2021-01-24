@@ -2,7 +2,6 @@
 #define CHIRC_SERVER_H_
 
 #include "uthash.h"
-#include "msg_handler.h"
 #include <stdbool.h>
 
 #define MAX_PARAMS  15
@@ -45,16 +44,16 @@ typedef struct server_ctx
 {
     unsigned int num_connections;
     pthread_mutex_t lock;
+    client_info_t *clients_hashtable;
 } server_ctx_t;
 
 typedef struct worker_args
 {
     int socket;
+    char *client_hostname;
     /* ADDED: We need to pass the server context to the worker thread */
     server_ctx_t *ctx;
-    client_info_t *clients_hashtable;
 } worker_args_t;
 
-void *service_single_client(void *args);
 
 #endif
