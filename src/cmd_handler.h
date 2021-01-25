@@ -27,7 +27,6 @@ typedef struct handler_entry
 #define NICK_PAM 1
 #define USER_PAM 4             
 #define JOIN_PAM 1 
- 
 #define OPER_PAM 2                 
 
 #endif

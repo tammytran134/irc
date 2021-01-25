@@ -20,7 +20,7 @@ bool check_cmd(int input, int standard, char *operator)
             return false;
         }
     }
-    if (sameStr(operator, ">="))
+    else if (sameStr(operator, ">="))
     {
         if (input >= standard) 
         {
@@ -31,7 +31,7 @@ bool check_cmd(int input, int standard, char *operator)
             return false;
         }
     }
-    if (sameStr(operator, "=="))
+    else if (sameStr(operator, "=="))
     {
         if (input == standard)
         {
@@ -41,6 +41,10 @@ bool check_cmd(int input, int standard, char *operator)
         {
             return false;
         }
+    }
+    else
+    {
+        return false;
     }
 }
 

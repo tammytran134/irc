@@ -32,6 +32,13 @@ typedef struct cmd {
     char *params[MAX_PARAMS];
 } cmd_t;
 
+typedef struct connection_info
+{
+    int client_socket;
+    char *server_hostname;
+    char *client_hostname;
+} connection_info_t;
+
 bool sameStr(char *s1, char *s2);
 
 /* IRC server's message handler helper functions */
@@ -43,8 +50,7 @@ bool sameStr(char *s1, char *s2);
  * and host server info to pass these inputs to exec_msg
  */
 msg_t recv_msg(char *buf, msg_t rmsg, client_info_t **clients,
-                int client_socket, char *client_hostname, 
-                char *server_hostname);
+                connection_info_t connection);
 
 /* This function parses a complete command and 
  * breaks it down into command part and parameters part
@@ -55,7 +61,7 @@ cmd_t parse_msg(char *buffer);
  * specifically, it checks conditions and returns
  * the reply welcome when user correctly registers in the server
  */
-void exec_msg(int client_socket, client_info_t **clients, 
-                char *client_hostname, char *server_hostname, cmd_t msg);
+void exec_msg(client_info_t **clients, 
+                cmd_t msg, connection_info_t connection);
 
 #endif

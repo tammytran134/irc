@@ -91,8 +91,8 @@ void *service_single_client(void *args) {
         gethostname(server_hostname, sizeof server_hostname);
         /* Send the data received from the buf 
          * to recv_msg to parse and process */
-        rmsg = recv_msg(buf, rmsg, &clients_hashtable, client_socket, 
-                        client_hostname, server_hostname);
+        connection_info_t connection = {client_socket, server_hostname, client_hostname};
+        rmsg = recv_msg(buf, rmsg, &clients_hashtable, connection);
     }
     close(client_socket);
     pthread_exit(NULL);

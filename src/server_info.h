@@ -16,6 +16,7 @@ typedef struct nick_info {
     char *realname;
 } nick_info_t;
 
+
 /* This struct is a hashtable whose key is the client's hostname
  * and value is the nick_info_t struct belonging to that client
  * so that we can uniquely identify each client and their registered info
