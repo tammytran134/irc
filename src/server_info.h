@@ -9,6 +9,10 @@
 #define MAX_MSG_LEN 512
 #define MAX_STR_LEN 1024
 #define MAX_BUF_LEN 100
+#define INCR 1
+#define DECR 2
+#define UNKNOWN 3
+#define KNOWN 4
 
 typedef struct irc_oper
 {
@@ -29,12 +33,13 @@ typedef struct irc_operator
 typedef struct server_ctx
 {
     unsigned int num_connections;
-    // pthread_mutex_t lock;
+    unsigned int num_unknown_connections;
     client_info_t *clients_hashtable;
     nick_hb_t *nicks_hashtable;
     channel_hb_t *channels_hashtable;
     irc_operator_t *irc_operators_hashtable;
     char *password;
+    pthread_mutex_t lock;
 } server_ctx_t;
 
 typedef struct worker_args
@@ -44,6 +49,8 @@ typedef struct worker_args
     /* ADDED: We need to pass the server context to the worker thread */
     server_ctx_t *ctx;
 } worker_args_t;
+
+void change_connection(server_ctx_t *ctx, int mode, int operator);
 
 
 #endif

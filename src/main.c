@@ -56,6 +56,7 @@
 #include "log.h"
 #include "msg_handler.h"
 #include "server_info.h"
+#include "clients.h"
 
 void *service_single_client(void *args) {
     worker_args_t *wa;
@@ -74,15 +75,8 @@ void *service_single_client(void *args) {
     ctx = wa->ctx;
 
     pthread_detach(pthread_self());
-            /* This loop continues to listen and receive message
-         * until client has put in NICK and USER command */
-    while (!(rmsg.nick_cmd && rmsg.user_cmd))
+    while ((numbytes = recv(client_socket, buf, sizeof buf, 0)) != -1)
     {
-        if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1)
-        {
-            perror("recv() failed");
-            exit(1);
-        }
         buf[numbytes] = '\0';
         /* Get name of host server */
         char server_hostname[MAX_STR_LEN];
@@ -90,8 +84,15 @@ void *service_single_client(void *args) {
         /* Send the data received from the buf 
          * to recv_msg to parse and process */
         connection_info_t connection = {client_socket, server_hostname, client_hostname};
-        //rmsg = recv_msg(buf, rmsg, &clients_hashtable, connection);
         rmsg = recv_msg(buf, rmsg, ctx, connection);
+    }
+    /* if client's connection is unknown, change the 
+     * unknown_connection field in ctx when client quits
+     */
+    client_info_t *clients = ctx->clients_hashtable;
+    if ((has_entered_NICK(client_hostname, &clients)) || (has_entered_USER(client_hostname, &clients)))
+    {
+        change_connection(ctx, UNKNOWN, DECR);
     }
     close(client_socket);
     pthread_exit(NULL);
@@ -189,13 +190,14 @@ int main(int argc, char *argv[])
     /* Initialize context object */
     server_ctx_t *ctx = calloc(1, sizeof(server_ctx_t));
     ctx->num_connections = 0;
+    ctx->num_unknown_connections = 0;
     ctx->clients_hashtable = clients_hashtable;
     ctx->nicks_hashtable = nicks_hashtable;
     ctx->channels_hashtable = channels_hashtable;
     ctx->irc_operators_hashtable = irc_operators_hashtable;
     ctx->password = passwd;
 
-    //pthread_mutex_init(&ctx->lock, NULL);
+    pthread_mutex_init(&ctx->lock, NULL);
 
     sigset_t new;
     sigemptyset (&new);
@@ -270,6 +272,7 @@ int main(int argc, char *argv[])
         client_socket = accept(server_socket, 
                                 (struct sockaddr *) client_addr, 
                                 &sin_size);
+        change_connection(ctx, UNKNOWN, INCR);
         if (client_socket == -1) 
         {
             free(client_addr);
@@ -304,7 +307,7 @@ int main(int argc, char *argv[])
     }
     close(server_socket);
     /* ADDED: Destroy the lock */
-    //pthread_mutex_destroy(&ctx->lock);
+    pthread_mutex_destroy(&ctx->lock);
     free(ctx);
 
     return EXIT_SUCCESS;

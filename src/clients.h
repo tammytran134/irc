@@ -58,4 +58,10 @@ client_info_t *get_client_with_nick(
     client_info_t **clients,
     nick_hb_t **nicks);
 
+bool has_entered_NICK(char *client_hostname, client_info_t **clients);
+
+bool has_entered_USER(char *client_hostname, client_info_t **clients);
+
+bool has_registered(char *client_hostname, client_info_t **clients);
+
 #endif

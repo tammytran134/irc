@@ -73,3 +73,53 @@ client_info_t *get_client_with_nick(
     }
     return NULL;
 }
+
+bool has_entered_NICK(char *client_hostname, client_info_t **clients) 
+{
+    client_info_t *client = get_client_info(client_hostname, clients);
+    if (client == NULL)
+    {
+        return false;
+    }
+    else {
+        if (client->info.nick == NULL) 
+        {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    return true;
+}
+
+bool has_entered_USER(char *client_hostname, client_info_t **clients)
+{
+    client_info_t *client = get_client_info(client_hostname, clients);
+    if (client == NULL)
+    {
+        return false;
+    }
+    else {
+        if (client->info.username == NULL) 
+        {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    return true;
+}
+
+bool has_registered(char *client_hostname, client_info_t **clients)
+{
+    if ((has_entered_NICK(client_hostname, clients)) && (has_entered_USER(client_hostname, clients)))
+    {
+        return true;
+    }
+    else 
+    {
+        return false;
+    }
+}
