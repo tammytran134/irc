@@ -8,12 +8,6 @@
 #include "msg_handler.h"
 #include "reply.h"
 
-bool sameStr(char *s1, char *s2)
-{
-    /* Check if two strings are the same */
-    return strcmp(s1, s2) == 0;
-}
-
 void send_welcome(
     int client_socket,
     char *reply_code,

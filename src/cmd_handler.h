@@ -2,21 +2,44 @@
 #define CHIRC_CMD_HANDLER_H_
 
 #include <stdbool.h>
-#include "msg_handler.h"
+#include "channels.h"
+#include "clients.h"
+#include "server_info.h"
 
-typedef int (*handler_function)(cmd_t, connection_info_t);
+/* This struct breaks down a complete command 
+ * into command and parameters
+ */
+typedef struct cmd {
+    /* This will be the first string in the command line */
+    char* command;
+    /* How many params a certain command requires */
+    int num_params;
+    /* each element in the array will represent a parameter in order */
+    char *params[MAX_PARAMS];
+} cmd_t;
 
-int handler_NICK(cmd_t cmd, connection_info_t connection);
-int handler_USER(cmd_t cmd, connection_info_t connection);
-int handler_QUIT(cmd_t cmd, connection_info_t connection);
-int handler_JOIN(cmd_t cmd, connection_info_t connection);
-int handler_PRIVMSG(cmd_t cmd, connection_info_t connection);
-int handler_NOTICE(cmd_t cmd, connection_info_t connection);
-int handler_LIST(cmd_t cmd, connection_info_t connection);
-int handler_MODE(cmd_t cmd, connection_info_t connection);
-int handler_OPER(cmd_t cmd, connection_info_t connection);
-int handler_PONG(cmd_t cmd, connection_info_t connection);
-int handler_LUSERS(cmd_t cmd, connection_info_t connection);
+typedef struct connection_info
+{
+    int client_socket;
+    char *server_hostname;
+    char *client_hostname;
+} connection_info_t;
+
+bool sameStr(char *s1, char *s2);
+
+typedef int (*handler_function)(cmd_t, connection_info_t, server_ctx_t);
+
+int handler_NICK(cmd_t cmd, connection_info_t connection, server_ctx_t ctx);
+int handler_USER(cmd_t cmd, connection_info_t connection, server_ctx_t ctx);
+int handler_QUIT(cmd_t cmd, connection_info_t connection, server_ctx_t ctx);
+int handler_JOIN(cmd_t cmd, connection_info_t connection, server_ctx_t ctx);
+int handler_PRIVMSG(cmd_t cmd, connection_info_t connection, server_ctx_t ctx);
+int handler_NOTICE(cmd_t cmd, connection_info_t connection, server_ctx_t ctx);
+int handler_LIST(cmd_t cmd, connection_info_t connection, server_ctx_t ctx);
+int handler_MODE(cmd_t cmd, connection_info_t connection, server_ctx_t ctx);
+int handler_OPER(cmd_t cmd, connection_info_t connection, server_ctx_t ctx);
+int handler_PONG(cmd_t cmd, connection_info_t connection, server_ctx_t ctx);
+int handler_LUSERS(cmd_t cmd, connection_info_t connection, server_ctx_t ctx);
 
 typedef struct handler_entry
 {

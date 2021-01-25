@@ -60,7 +60,6 @@
 void *service_single_client(void *args) {
     worker_args_t *wa;
     server_ctx_t *ctx;
-    client_info_t *clients_hashtable;
     int client_socket;
     int numbytes;
     char buf[MAX_BUF_LEN];
@@ -69,11 +68,10 @@ void *service_single_client(void *args) {
     msg_t rmsg = {"", 0, false, false};
     rmsg.msg = msg;
 
-    wa = (struct worker_args*) args;
+    wa = (worker_args_t *) args;
     client_socket = wa->socket;
     client_hostname = wa->client_hostname;
     ctx = wa->ctx;
-    //clients_hashtable = ctx->clients_hashtable;
 
     pthread_detach(pthread_self());
             /* This loop continues to listen and receive message
@@ -177,10 +175,26 @@ int main(int argc, char *argv[])
     
     /* Initialize hashtable of clients' information */
     client_info_t *clients_hashtable = NULL;
+    /* Initialize hashtable of nicks' information */
+    nick_hb_t *nicks_hashtable = NULL;
+    /* Initialize hashtable of channels' information */
+    channel_hb_t *channels_hashtable = calloc(1, sizeof(channel_hb_t));
+    channel_client_t *channel_clients = NULL;
+    channels_hashtable->channel_clients = channel_clients;
+    /* Initialize hashtable of irc operators' information */
+    irc_operator_t *irc_operators_hashtable = calloc(1, sizeof(irc_operator_t));
+    irc_oper_t *irc_oper = NULL;
+    irc_operators_hashtable->irc_oper = irc_oper;
+
+    /* Initialize context object */
     server_ctx_t *ctx = calloc(1, sizeof(server_ctx_t));
     ctx->num_connections = 0;
     ctx->clients_hashtable = clients_hashtable;
+    ctx->nicks_hashtable = nicks_hashtable;
+    ctx->channels_hashtable = channels_hashtable;
+    ctx->irc_operators_hashtable = irc_operators_hashtable;
     ctx->password = passwd;
+
     //pthread_mutex_init(&ctx->lock, NULL);
 
     sigset_t new;
@@ -192,7 +206,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-
+    /* Set up socket */
     int server_socket;
     int client_socket;
     struct addrinfo hints, *res, *p;

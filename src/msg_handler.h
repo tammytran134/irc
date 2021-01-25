@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include "server_info.h"
+#include "cmd_handler.h"
 
 /* This struct holds data received from the client
  * until a complete command has been received;
@@ -20,26 +21,6 @@ typedef struct msg
     bool user_cmd;
 } msg_t;
 
-/* This struct breaks down a complete command 
- * into command and parameters
- */
-typedef struct cmd {
-    /* This will be the first string in the command line */
-    char* command;
-    /* How many params a certain command requires */
-    int num_params;
-    /* each element in the array will represent a parameter in order */
-    char *params[MAX_PARAMS];
-} cmd_t;
-
-typedef struct connection_info
-{
-    int client_socket;
-    char *server_hostname;
-    char *client_hostname;
-} connection_info_t;
-
-bool sameStr(char *s1, char *s2);
 
 /* IRC server's message handler helper functions */
 
