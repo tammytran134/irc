@@ -73,7 +73,7 @@ void *service_single_client(void *args) {
     client_socket = wa->socket;
     client_hostname = wa->client_hostname;
     ctx = wa->ctx;
-    clients_hashtable = ctx->clients_hashtable;
+    //clients_hashtable = ctx->clients_hashtable;
 
     pthread_detach(pthread_self());
             /* This loop continues to listen and receive message
@@ -92,7 +92,8 @@ void *service_single_client(void *args) {
         /* Send the data received from the buf 
          * to recv_msg to parse and process */
         connection_info_t connection = {client_socket, server_hostname, client_hostname};
-        rmsg = recv_msg(buf, rmsg, &clients_hashtable, connection);
+        //rmsg = recv_msg(buf, rmsg, &clients_hashtable, connection);
+        rmsg = recv_msg(buf, rmsg, ctx, connection);
     }
     close(client_socket);
     pthread_exit(NULL);
@@ -179,7 +180,8 @@ int main(int argc, char *argv[])
     server_ctx_t *ctx = calloc(1, sizeof(server_ctx_t));
     ctx->num_connections = 0;
     ctx->clients_hashtable = clients_hashtable;
-    pthread_mutex_init(&ctx->lock, NULL);
+    ctx->password = passwd;
+    //pthread_mutex_init(&ctx->lock, NULL);
 
     sigset_t new;
     sigemptyset (&new);
@@ -288,7 +290,7 @@ int main(int argc, char *argv[])
     }
     close(server_socket);
     /* ADDED: Destroy the lock */
-    pthread_mutex_destroy(&ctx->lock);
+    //pthread_mutex_destroy(&ctx->lock);
     free(ctx);
 
     return EXIT_SUCCESS;

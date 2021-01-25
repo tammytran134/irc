@@ -44,8 +44,8 @@ client_info_t* get_client_info(char *hostname, client_info_t **clients);
 typedef struct server_ctx
 {
     unsigned int num_connections;
-    pthread_mutex_t lock;
     client_info_t *clients_hashtable;
+    char *password;
 } server_ctx_t;
 
 typedef struct worker_args

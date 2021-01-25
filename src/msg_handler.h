@@ -49,7 +49,7 @@ bool sameStr(char *s1, char *s2);
  * It also takes in the client hashtable, client's server info
  * and host server info to pass these inputs to exec_msg
  */
-msg_t recv_msg(char *buf, msg_t rmsg, client_info_t **clients,
+msg_t recv_msg(char *buf, msg_t rmsg, server_ctx_t *ctx,
                 connection_info_t connection);
 
 /* This function parses a complete command and 
@@ -61,7 +61,7 @@ cmd_t parse_msg(char *buffer);
  * specifically, it checks conditions and returns
  * the reply welcome when user correctly registers in the server
  */
-void exec_msg(client_info_t **clients, 
+void exec_msg(server_ctx_t *ctx, 
                 cmd_t msg, connection_info_t connection);
 
 #endif

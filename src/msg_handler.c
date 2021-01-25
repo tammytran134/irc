@@ -40,7 +40,7 @@ void send_welcome(
 msg_t recv_msg(
     char *buf,
     msg_t rmsg,
-    client_info_t **clients,
+    server_ctx_t *ctx,
     connection_info_t connection)
 {
     /* Receives and process incoming message from server:
@@ -82,7 +82,7 @@ msg_t recv_msg(
                 }
             }
             /* process it */
-            exec_msg(clients, cmd, connection);
+            exec_msg(ctx, cmd, connection);
             /* renew the msg_t struct to wipe out the char *msg buffer
              * and renew the counter to hold new message
              * after current command has been sent away to be processed
@@ -123,7 +123,7 @@ msg_t recv_msg(
                             rmsg.user_cmd = true;
                         }
                     }
-                    exec_msg(clients, cmd, connection);
+                    exec_msg(ctx, cmd, connection);
                     /* renew the msg_t struct to wipe out the char *msg buffer
                      * and renew the counter to hold new message
                      * after current command has been sent away to be processed
@@ -210,12 +210,13 @@ cmd_t parse_msg(char *msg_buffer)
 }
 
 void exec_msg(
-    client_info_t **clients,
+    server_ctx_t *ctx,
     cmd_t msg,
     connection_info_t connection)
 {
     /* Execute parsed message */
     char *reply_code = malloc(sizeof(char) * 3);
+    client_info_t *clients = ctx->clients_hashtable;
     /* Get client data from hashtable. Return NULL if client is not found */
     int client_socket = connection.client_socket;
     char *client_hostname = connection.client_hostname;
