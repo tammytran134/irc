@@ -221,7 +221,7 @@ void exec_msg(
     int client_socket = connection.client_socket;
     char *client_hostname = connection.client_hostname;
     char *server_hostname = connection.server_hostname;
-    client_info_t *client = get_client_info(client_hostname, clients);
+    client_info_t *client = get_client_info(client_hostname, &clients);
     if (sameStr(msg.command, "NICK"))
     {
         /* Command == "NICK" */
@@ -239,7 +239,7 @@ void exec_msg(
             new_client->info.username = NULL;
             new_client->info.realname = NULL;
             /* Add new client to clients hashtable */
-            add_client(new_client, clients);
+            add_client(new_client, &clients);
         }
         else
         {
@@ -303,7 +303,7 @@ void exec_msg(
             strcpy(new_client->hostname, client_hostname);
             new_client->info.nick = NULL;
             /* Add new client to clients' hashtable */
-            add_client(new_client, clients);
+            add_client(new_client, &clients);
         }
     }
 
