@@ -29,8 +29,8 @@ void remove_nick(char *nick, nick_hb_t **nicks, client_info_t **clients)
     if (nick_to_remove != NULL)
     {
         /* Remove from clients hashtable */
-        remove_client(nick_to_remove->hostname, clients)
-            HASH_DELETE(hh, *nicks, nick_to_remove);
+        remove_client(nick_to_remove->hostname, clients);
+        HASH_DELETE(hh, *nicks, nick_to_remove);
     }
 }
 

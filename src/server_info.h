@@ -3,6 +3,7 @@
 
 #include "uthash.h"
 #include "clients.h"
+#include "channels.h"
 
 #define MAX_PARAMS  15
 #define MAX_MSG_LEN 512
@@ -18,6 +19,7 @@ typedef struct server_ctx
     // pthread_mutex_t lock;
     client_info_t *clients_hashtable;
     nick_hb_t *nicks_hashtable;
+    channel_hb_t *channels_hashtable;
 } server_ctx_t;
 
 typedef struct worker_args

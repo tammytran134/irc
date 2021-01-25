@@ -7,15 +7,15 @@
 
 /* A hash table for clients' information in a channel */
 typedef struct channel_client {
-    char *nick; /* key */
+    char *hostname; /* key */
     char *mode; /* value */
     UT_hash_handle hh;
 } channel_client_t;
 
 /* Add client to channel */
-void add_channel_client(char *nick, char *mode, channel_client_t **clients);
+void add_channel_client(char *hostname, char *mode, channel_client_t **clients);
 /* Remove client from channel */
-void remove_channel_client(char *nick, channel_client_t **clients);
+void remove_channel_client(char *hostname, channel_client_t **clients);
 
 /* A hash table for channels on the server */
 typedef struct channel_hb {

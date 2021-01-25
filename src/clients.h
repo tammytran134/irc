@@ -2,6 +2,7 @@
 #define CHIRC_CLIENTS_H_
 
 #include <pthread.h>
+#include <stdbool.h>
 
 #include "uthash.h"
 
@@ -11,6 +12,7 @@ typedef struct user_info
     char *nick;
     char *username;
     char *realname;
+    bool is_irc_operator;
 } user_info_t;
 
 /* This struct is a hashtable of unique nicks and their corresponding hostnames
@@ -37,13 +39,11 @@ void remove_nick(char *nick, nick_hb_t **nicks, client_info_t **clients);
  */
 typedef struct client_info
 {
-    pthread_mutex_t lock;
     char *hostname;    /* key for hashtable */
+    int client_socket;
     user_info_t info;  /* value for hashtable */
     UT_hash_handle hh; /* makes this struct hashable */
-    /* TODO: socket & socket_lock so that only one can write to the socket at a
-     * time.
-     */
+    pthread_mutex_t lock;
 } client_info_t;
 
 /* Add new client to hashtable of clients on the server */
