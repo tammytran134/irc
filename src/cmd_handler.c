@@ -20,7 +20,7 @@ bool check_cmd(int input, int standard, char *operator)
             return false;
         }
     }
-    if (sameStr(operator, ">="))
+    else if (sameStr(operator, ">="))
     {
         if (input >= standard) 
         {
@@ -31,7 +31,7 @@ bool check_cmd(int input, int standard, char *operator)
             return false;
         }
     }
-    if (sameStr(operator, "=="))
+    else if (sameStr(operator, "=="))
     {
         if (input == standard)
         {
@@ -42,9 +42,13 @@ bool check_cmd(int input, int standard, char *operator)
             return false;
         }
     }
+    else
+    {
+        return false;
+    }
 }
 
-int handler_NICK(cmd_t cmd) 
+int handler_NICK(cmd_t cmd, connection_info_t connection) 
 {
     if (!(check_cmd(cmd.num_params, NICK_PAM, "==")))
     {
@@ -67,7 +71,7 @@ int handler_NICK(cmd_t cmd)
     return 0;
 }
 
-int handler_USER(cmd_t cmd)
+int handler_USER(cmd_t cmd, connection_info_t connection)
 {
     if (!(check_cmd(cmd.num_params, USER_PAM, "==")))
     {
@@ -85,7 +89,7 @@ int handler_USER(cmd_t cmd)
     return 0;
 } 
 
-int handler_QUIT(cmd_t cmd)
+int handler_QUIT(cmd_t cmd, connection_info_t connection)
 {
         // send closing link hostname, msg
         // remove user from all hash tables - channels, systems
@@ -93,7 +97,7 @@ int handler_QUIT(cmd_t cmd)
     return 0;
 }
 
-int handler_JOIN(cmd_t cmd)
+int handler_JOIN(cmd_t cmd, connection_info_t connection)
 {
     if (!(check_cmd(cmd.num_params, JOIN_PAM, "==")))
     {
@@ -109,7 +113,7 @@ int handler_JOIN(cmd_t cmd)
     return 0;
 }
 
-int handler_PRIVMSG(cmd_t cmd)
+int handler_PRIVMSG(cmd_t cmd, connection_info_t connection)
 {
 
     // if no name of recipient is identified
@@ -128,14 +132,14 @@ int handler_PRIVMSG(cmd_t cmd)
     return 0;
 }
 
-int handler_NOTICE(cmd_t cmd)
+int handler_NOTICE(cmd_t cmd, connection_info_t connection)
 {
     // identify errors but don't reply
     // send messages if success
     return 0;
 }
 
-int handler_LIST(cmd_t cmd)
+int handler_LIST(cmd_t cmd, connection_info_t connection)
 {
     // if no params, list all channels
     // if one param: list the channel
@@ -144,7 +148,7 @@ int handler_LIST(cmd_t cmd)
     return 0;
 }
 
-int handler_MODE(cmd_t cmd)
+int handler_MODE(cmd_t cmd, connection_info_t connection)
 {
     // if only channel is provided
     // ERR_NOSUCHCHANNEL
@@ -160,7 +164,7 @@ int handler_MODE(cmd_t cmd)
     // relay back to all users
     return 0;
 }
-int handler_OPER(cmd_t cmd)
+int handler_OPER(cmd_t cmd, connection_info_t connection)
 {
     if (!(check_cmd(cmd.num_params, OPER_PAM, "==")))
     {
@@ -176,19 +180,19 @@ int handler_OPER(cmd_t cmd)
     return 0;
 }
 
-int handler_PING(cmd_t cmd)
+int handler_PING(cmd_t cmd, connection_info_t connection)
 {
     // send pong message to client
     return 0;
 }
 
-int handler_PONG(cmd_t cmd)
+int handler_PONG(cmd_t cmd, connection_info_t connection)
 {
     // do nothing
     return 0;
 }
 
-int handler_LUSERS(cmd_t cmd)
+int handler_LUSERS(cmd_t cmd, connection_info_t connection)
 {
     //RPL_LUSERCLIENT, those who have put in both nick and user
     //RPL_LUSEROP, 
@@ -198,7 +202,7 @@ int handler_LUSERS(cmd_t cmd)
     return 0;
 }
 
-void exec_cmd(cmd_t full_cmd)
+void exec_cmd(cmd_t full_cmd, connection_info_t connection)
 {
     handler_entry_t handlers[] = {
                                     {"NICK", handler_NICK}, 
@@ -220,9 +224,8 @@ void exec_cmd(cmd_t full_cmd)
     for (i = 0; i < num_handlers; i++) 
     {
         // check for ERR_UNREGISTERED error NEED A VARIABLE TO CHECK IF A USER IS REGISTERED********
-        //*********** NEED TO THINK OF A STRUCT TO HOLD SERVER_INFO
         if (sameStr(cmd, handlers[i].name)) {
-            handlers[i].func(full_cmd);
+            handlers[i].func(full_cmd, connection);
             break;
         }
     }

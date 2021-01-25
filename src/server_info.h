@@ -20,6 +20,7 @@ typedef struct server_ctx
     client_info_t *clients_hashtable;
     nick_hb_t *nicks_hashtable;
     channel_hb_t *channels_hashtable;
+    char *password;
 } server_ctx_t;
 
 typedef struct worker_args
