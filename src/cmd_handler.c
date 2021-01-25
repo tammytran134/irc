@@ -58,20 +58,25 @@ int handler_NICK(cmd_t cmd, connection_info_t connection, server_ctx_t *ctx)
 {
     if (!(check_cmd(cmd.num_params, NICK_PAM, "==")))
     {
-        //reply(ERR_NONICKNAMEGIVEN);
+        reply_error(cmd.command, ERR_NONICKNAMEGIVEN, connection);
     }
     else
     {
-        // if cmd.params[0] is already in hash table nick
-        // throw ERR_NICKNAMEINUSE
-        // else 
-        //{
-            //client_info_t *client = get_client_info(client_hostname, ctx->clients_hashtable);
-            // have to check for cases when NICK is first command, second command
-            //change the user info 
-            // if the user is registered send reply
-            // if the user is already there, relay messages to all channels
-        //}
+        client_info_t *clients = ctx->clients_hashtable;
+        nick_hb_t *nicks = ctx->nicks_hashtable;
+        char *nickname = cmd.params[0];
+        client_info_t *nick = get_client_with_nick(nickname, &clients, &nicks);
+        //if nickname is already in hash table nick
+        if (nick != NULL)
+        {
+            reply_error(nickname, ERR_NICKNAMEINUSE, connection);
+        }
+        else {
+            /* TODO: implement nick
+             * remember to see if we need to send reply welcome
+             * or decrease unknown connection
+             */
+        }
     }
 
     return 0;
@@ -81,7 +86,7 @@ int handler_USER(cmd_t cmd, connection_info_t connection, server_ctx_t *ctx)
 {
     if (!(check_cmd(cmd.num_params, USER_PAM, "==")))
     {
-        // NEEDMOREPARAMS
+        reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection);
     }
     else
     {
@@ -112,7 +117,7 @@ int handler_JOIN(cmd_t cmd, connection_info_t connection, server_ctx_t *ctx)
 {
     if (!(check_cmd(cmd.num_params, JOIN_PAM, "==")))
     {
-        // NEEDMOREPARAMS
+        reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection);
     }
     // else
     // if channel exists
@@ -179,7 +184,7 @@ int handler_OPER(cmd_t cmd, connection_info_t connection, server_ctx_t *ctx)
 {
     if (!(check_cmd(cmd.num_params, OPER_PAM, "==")))
     {
-        // error NEEDMOREPARAMS
+        reply_error (cmd.command, ERR_NEEDMOREPARAMS, connection);
     }
     // MUST HAVE INFORMATION ON PASSWORD****************
     // if password mismatch
@@ -243,12 +248,12 @@ void exec_cmd(cmd_t full_cmd, connection_info_t connection, server_ctx_t *ctx)
             }
             else 
             {
-                /* TO DO: throw ERR_UNREGISTERED; */
+                reply_error(cmd, ERR_NOTREGISTERED, connection);
             }
         }
     }
     if (i == num_handlers)
     {
-        /* TO DO: throw ERR_UNKNOWNCOMMAND; */
+        reply_error(cmd, ERR_UNKNOWNCOMMAND, connection);
     }
 }

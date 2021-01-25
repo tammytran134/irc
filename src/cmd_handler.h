@@ -5,6 +5,12 @@
 #include "channels.h"
 #include "clients.h"
 #include "server_info.h"
+#include "reply.h"
+
+#define NICK_PAM 1
+#define USER_PAM 4             
+#define JOIN_PAM 1 
+#define OPER_PAM 2  
 
 /* This struct breaks down a complete command 
  * into command and parameters
@@ -17,13 +23,6 @@ typedef struct cmd {
     /* each element in the array will represent a parameter in order */
     char *params[MAX_PARAMS];
 } cmd_t;
-
-typedef struct connection_info
-{
-    int client_socket;
-    char *server_hostname;
-    char *client_hostname;
-} connection_info_t;
 
 bool sameStr(char *s1, char *s2);
 
@@ -45,12 +44,7 @@ typedef struct handler_entry
 {
     char *name;
     handler_function func;
-} handler_entry_t;
-
-#define NICK_PAM 1
-#define USER_PAM 4             
-#define JOIN_PAM 1 
-#define OPER_PAM 2                 
+} handler_entry_t;               
 
 #endif
 

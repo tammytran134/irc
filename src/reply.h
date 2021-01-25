@@ -39,6 +39,7 @@
 #ifndef REPLY_H_
 #define REPLY_H_
 
+#define MAX_LEN_STR 1024
 
 #define RPL_WELCOME             "001"
 #define RPL_YOURHOST            "002"
@@ -104,5 +105,15 @@
 #define ERR_UMODEUNKNOWNFLAG    "501"
 #define ERR_USERSDONTMATCH      "502"
 
+typedef struct connection_info
+{
+    int client_socket;
+    char *server_hostname;
+    char *client_hostname;
+} connection_info_t;
+
+
+void reply_error(char *cmd, char *reply_code, connection_info_t connection);
+void send_error_reply(char *msg, char *reply_code, connection_info_t connection);
 
 #endif /* REPLY_H_ */

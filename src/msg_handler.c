@@ -6,7 +6,6 @@
 #include <sys/socket.h>
 
 #include "msg_handler.h"
-#include "reply.h"
 
 void send_welcome(
     int client_socket,
