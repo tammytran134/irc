@@ -64,21 +64,11 @@ msg_t recv_msg(
             /* copy the message to a new char array to process it */
             char copy_msg[MAX_MSG_LEN];
             strcpy(copy_msg, rmsg.msg);
-            /* process it */
-            exec_msg(client_socket, clients, client_hostname, 
-                    server_hostname, parse_msg(copy_msg));
-            /* renew the msg_t struct to wipe out the char *msg buffer
-             * and renew the counter to hold new message
-             * after current command has been sent away to be processed
-             */
-            char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
-            rmsg.msg = new_msg;
-            rmsg.counter = 0;
-            cmd_t cmd = parse_msg(copy_msg);
             /* check if the command being sent is NICK or USER
              * if yes, then turn boolean field NICK or USER to 
              * true to pass it back to main function
              */
+            cmd_t cmd = parse_msg(copy_msg);
             if (rmsg.nick_cmd == false)
             {
                 if (sameStr(cmd.command, "NICK"))
@@ -93,6 +83,16 @@ msg_t recv_msg(
                     rmsg.user_cmd = true;
                 }
             }
+            /* process it */
+            exec_msg(client_socket, clients, client_hostname, 
+                    server_hostname, cmd);
+            /* renew the msg_t struct to wipe out the char *msg buffer
+             * and renew the counter to hold new message
+             * after current command has been sent away to be processed
+             */
+            char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
+            rmsg.msg = new_msg;
+            rmsg.counter = 0;
             return rmsg;
         }
         /* If not message overflow, then add character to msg buffer */
@@ -107,21 +107,11 @@ msg_t recv_msg(
                     /* copy the message to a new char array to process it */
                     char copy_msg[strlen(rmsg.msg)];
                     strcpy(copy_msg, rmsg.msg);
-                    exec_msg(client_socket, clients, 
-                            client_hostname, server_hostname, 
-                            parse_msg(copy_msg));
-                    /* renew the msg_t struct to wipe out the char *msg buffer
-                     * and renew the counter to hold new message
-                     * after current command has been sent away to be processed
-                     */
-                    char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
-                    rmsg.msg = new_msg;
-                    rmsg.counter = 0;
-                    cmd_t cmd = parse_msg(copy_msg);
                     /* check if the command being sent is NICK or USER
                      * if yes, then turn boolean field NICK or USER to 
                      * true to pass it back to main function
                      */
+                    cmd_t cmd = parse_msg(copy_msg);
                     if (rmsg.nick_cmd == false)
                     {
                         if (sameStr(cmd.command, "NICK"))
@@ -136,6 +126,16 @@ msg_t recv_msg(
                             rmsg.user_cmd = true;
                         }
                     }
+                    exec_msg(client_socket, clients, 
+                            client_hostname, server_hostname, 
+                            cmd);
+                    /* renew the msg_t struct to wipe out the char *msg buffer
+                     * and renew the counter to hold new message
+                     * after current command has been sent away to be processed
+                     */
+                    char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
+                    rmsg.msg = new_msg;
+                    rmsg.counter = 0;
                 }
                 else
                 {
