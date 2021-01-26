@@ -302,7 +302,7 @@ int handler_PING(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                             &ctx->clients_hashtable);
     char reply_msg[MAX_LEN_STR];
     sprintf(reply_msg, "PONG %s\r\n", connection->server_hostname);
-    send_final(client, connection, reply_msg, SERVER_REPLY);
+    send_final(client, reply_msg);
     return 0;
 }
 

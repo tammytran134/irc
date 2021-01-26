@@ -54,7 +54,7 @@ void server_reply(char *msg, char *reply_code, connection_info_t *connection, cl
     char *client_hostname = connection->registered ? connection->client_hostname : "*";
     sprintf (reply_msg, ":%s %s %s %s\r\n", connection->server_hostname, reply_code, client_hostname, msg);
     //send(connection->client_socket, reply_msg, strlen(reply_msg), 0);
-    send_final(client, connection, reply_msg, SERVER_REPLY);
+    send_final(client, reply_msg);
 }
 
 
@@ -63,7 +63,7 @@ void relay_reply(char *msg, connection_info_t *connection,
 {
     char reply_msg[MAX_LEN_STR];
     sprintf (reply_msg, ":%s!%s@%s %s\r\n", sender->info.nick, sender->info.username, connection->client_hostname, msg);
-    send_final(receiver, connection, reply_msg, RELAY_REPLY);
+    send_final(receiver, reply_msg);
 }
 
 

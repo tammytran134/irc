@@ -85,21 +85,11 @@ void server_remove_nick(server_ctx_t *ctx, char *nick)
     pthread_mutex_unlock(&ctx->nicks_hashtable->lock);
 }
 
-void send_final(client_info_t *receiver, 
-                connection_info_t *connection, char *msg, int type_of_reply) 
+void send_final(client_info_t *receiver, char *msg) 
 {
-    if (type_of_reply == SERVER_REPLY)
-    {
-        pthread_mutex_lock(&receiver->lock);
-        send(connection->client_socket, msg, strlen(msg), 0);
-        pthread_mutex_lock(&receiver->lock);
-    }
-    else if (type_of_reply == RELAY_REPLY)
-    {
-        pthread_mutex_lock(&receiver->lock);
-        send(receiver->client_socket, msg, strlen(msg), 0);
-        pthread_mutex_lock(&receiver->lock);
-    }
+    pthread_mutex_lock(&receiver->lock);
+    send(receiver->client_socket, msg, strlen(msg), 0);
+    pthread_mutex_lock(&receiver->lock);
 }
 
 
