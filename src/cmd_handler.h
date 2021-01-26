@@ -6,6 +6,7 @@
 #include "clients.h"
 #include "server_info.h"
 #include "reply.h"
+#include "uthash.h"
 
 #define NICK_PAM 1
 #define USER_PAM 4             

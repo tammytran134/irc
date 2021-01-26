@@ -180,6 +180,7 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     if (!(check_cmd(cmd.num_params, JOIN_PAM, "==")))
     {
         reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection, client);
+        return 0;
     }
     // else
     // if channel exists
@@ -219,10 +220,36 @@ int handler_NOTICE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
 int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
-    // if no params, list all channels
-    // if one param: list the channel
-    // reply RPL_LIST channel and no of users
-    // RPL_LISTEND
+    char reply_msg[MAX_LEN_STR];
+    char single_msg[MAX_LEN_STR];
+    channel_hb_t *channels = ctx->channels_hashtable;
+    channel_hb_t *channel = NULL;
+    int num_channel_clients;
+    char *channel_name;
+    client_info_t *client = get_client_info(connection->client_hostname,
+                            &ctx->clients_hashtable);
+    if (cmd.num_params == 0)
+    {
+        for (channel=channels; channel != NULL; channel=channels->hh.next) 
+        {
+            channel_name = channel->channel_name;
+            num_channel_clients = count_channel_clients(&channel->channel_clients);
+            sprintf(single_msg, "%s # %d:\r\n", channel_name, num_channel_clients);
+            strcat(reply_msg, single_msg);
+        }
+        server_reply(reply_msg, RPL_LIST, connection, client);
+        server_reply(":End of LIST", RPL_LISTEND, connection, client);
+    }
+    else 
+    {
+        channel_name = cmd.params[0];
+        channel_hb_t *channel = get_channel_info(channel_name,
+                        &ctx->channels_hashtable);
+        num_channel_clients = count_channel_clients(&channel->channel_clients);
+        sprintf(single_msg, "%s # %d:\r\n", channel_name, num_channel_clients);
+        server_reply(reply_msg, RPL_LIST, connection, client);
+        server_reply(":End of LIST", RPL_LISTEND, connection, client);
+    }
     return 0;
 }
 
