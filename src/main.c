@@ -83,7 +83,11 @@ void *service_single_client(void *args) {
         gethostname(server_hostname, sizeof server_hostname);
         /* Send the data received from the buf 
          * to recv_msg to parse and process */
-        connection_info_t connection = {client_socket, server_hostname, client_hostname};
+        connection_info_t *connection = calloc(1, sizeof(connection_info_t));
+        connection->client_socket = client_socket;
+        connection->server_hostname = server_hostname;
+        connection->client_hostname = client_hostname;
+        connection->registered = false;
         rmsg = recv_msg(buf, rmsg, ctx, connection);
     }
     /* if client's connection is unknown, change the 

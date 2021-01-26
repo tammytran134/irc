@@ -39,6 +39,8 @@
 #ifndef REPLY_H_
 #define REPLY_H_
 
+#include "server_info.h"
+
 #define MAX_LEN_STR 1024
 
 #define RPL_WELCOME             "001"
@@ -110,10 +112,11 @@ typedef struct connection_info
     int client_socket;
     char *server_hostname;
     char *client_hostname;
+    bool registered;
 } connection_info_t;
 
 
-void reply_error(char *cmd, char *reply_code, connection_info_t connection);
-void send_error_reply(char *msg, char *reply_code, connection_info_t connection);
+void reply_error(char *cmd, char *reply_code, connection_info_t *connection);
+void send_error_reply(char *msg, char *reply_code, connection_info_t *connection);
 
 #endif /* REPLY_H_ */

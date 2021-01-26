@@ -34,7 +34,7 @@ msg_t recv_msg(
     char *buf,
     msg_t rmsg,
     server_ctx_t *ctx,
-    connection_info_t connection)
+    connection_info_t *connection)
 {
     /* Receives and process incoming message from server:
      * buf: buffer for incoming mssage
@@ -205,15 +205,15 @@ cmd_t parse_msg(char *msg_buffer)
 void exec_msg(
     server_ctx_t *ctx,
     cmd_t msg,
-    connection_info_t connection)
+    connection_info_t *connection)
 {
     /* Execute parsed message */
     char *reply_code = malloc(sizeof(char) * 3);
     client_info_t *clients = ctx->clients_hashtable;
     /* Get client data from hashtable. Return NULL if client is not found */
-    int client_socket = connection.client_socket;
-    char *client_hostname = connection.client_hostname;
-    char *server_hostname = connection.server_hostname;
+    int client_socket = connection->client_socket;
+    char *client_hostname = connection->client_hostname;
+    char *server_hostname = connection->server_hostname;
     client_info_t *client = get_client_info(client_hostname, &clients);
     if (sameStr(msg.command, "NICK"))
     {
