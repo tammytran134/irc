@@ -15,7 +15,7 @@
 #define KNOWN 4
 
 #define SERVER_REPLY 5
-#define REPLAY_REPLY 6
+#define RELAY_REPLY 6
 
 typedef struct irc_oper
 {
@@ -73,7 +73,7 @@ void server_add_nick(server_ctx_t *ctx, char *nick, char *hostname);
 void server_remove_nick(server_ctx_t *ctx, char *nick);
 
 
-void send_final(client_info_t *sender, client_info_t *receiver, 
+void send_final(client_info_t *receiver, 
                 connection_info_t *connection, char *msg, int type_of_reply);
 
 
