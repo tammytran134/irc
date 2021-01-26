@@ -59,6 +59,7 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     if (!(check_cmd(cmd.num_params, NICK_PAM, "==")))
     {
         reply_error(cmd.command, ERR_NONICKNAMEGIVEN, connection);
+        return 0;
     }
     else
     {
@@ -68,55 +69,61 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         char *nickname = cmd.params[0];
         client_info_t *client = get_client_w_nick(nickname, &clients, &nicks);
         //if nickname is already in hash table nick
-        if (client != NULL && client->hostname != connection->client_hostname)
+        if (client != NULL)
         {
-            /* Nick is already in use and belongs to another client */
+            /* Nick is already in use no matter who the client is */
             reply_error(nickname, ERR_NICKNAMEINUSE, connection);
             return 0;
         }
-        else if (client == NULL)
-        {
-            /* Client has not entered NICK */
-            client = get_client_info(connection->client_hostname, &clients);
-            client->info.nick = malloc(sizeof(char) * strlen(nickname));
-            strcpy(client->info.nick, nickname);
-
-            /* Add client's nick to server's nicks hash table */
-            server_add_nick(ctx, nickname, connection->client_hostname);
-            if (!connection->registered)
-            {
-                /* Update client's connection status */
-                connection->registered = true;
-                change_connection(ctx, UNKNOWN, DECR);
-                change_connection(ctx, KNOWN, INCR);
-            }
-            if (client->info.username != NULL)
-            {
-                /* Client has entered USER */
-                reply_welcome(client->info, RPL_WELCOME, connection);
-            }
-        }
         else
         {
-            /* Client has entered NICK before (client != NULL) */
-            free(client->info.nick);
-            /* Update nick in client's entry in clients hash table */
-            client->info.nick = malloc(sizeof(char) * strlen(nickname));
-            strcpy(client->info.nick, nickname);
-            /* Update nick in nicks hashtable */
-            server_remove_nick(ctx, nickname);
-            server_add_nick(ctx, nickname, client->hostname);
+            client = get_client_info(connection->client_hostname, &clients);
+            if (client->info.nick != NULL)
+            {
+                /* Client has entered NICK before */
+                free(client->info.nick);
+                /* Update nick in client's entry in clients hash table */
+                client->info.nick = malloc(sizeof(char) * strlen(nickname));
+                strcpy(client->info.nick, nickname);
+                /* Update nick in nicks hashtable */
+                server_remove_nick(ctx, nickname);
+                server_add_nick(ctx, nickname, client->hostname);
+            }
+            else 
+            {
+                /* Client has not entered NICK */
+                client->info.nick = malloc(sizeof(char) * strlen(nickname));
+                strcpy(client->info.nick, nickname);
+
+                /* Add client's nick to server's nicks hash table */
+                server_add_nick(ctx, nickname, connection->client_hostname);
+                if (client->info.username != NULL)
+                {
+                    /* If client has entered USER */
+                    connection->registered = true;
+                    change_connection(ctx, UNKNOWN, DECR);
+                    change_connection(ctx, KNOWN, INCR);
+                    reply_welcome(client->info, connection);
+                }
+                else
+                {
+                    /* Client has not entered USER */
+                    change_connection(ctx, UNKNOWN, DECR);
+                    change_connection(ctx, KNOWN, INCR);
+                }
+            }
         }
     }
-
     return 0;
 }
+
 
 int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     if (!(check_cmd(cmd.num_params, USER_PAM, "==")))
     {
         reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection);
+        return 0;
     }
     else
     {
@@ -127,6 +134,7 @@ int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         {
             /* Client has already executed USER command */
             reply_error(username, ERR_ALREADYREGISTRED, connection);
+            return 0;
         }
         else
         {
@@ -136,12 +144,12 @@ int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             client->info.realname = malloc(sizeof(char) * strlen(realname));
             if(client->info.nick != NULL)
             {
-                reply_welcome(client->info, RPL_WELCOME, connection);
+                reply_welcome(client->info, connection);
+                /* Client has not been registered */
+                connection->registered = true;
             }
             else
             {
-                /* Client has not been registered */
-                connection->registered = true;
                 change_connection(ctx, UNKNOWN, DECR);
                 change_connection(ctx, KNOWN, INCR);
             }
@@ -235,13 +243,22 @@ int handler_OPER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     if (!(check_cmd(cmd.num_params, OPER_PAM, "==")))
     {
         reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection);
+        return 0;
     }
-    // MUST HAVE INFORMATION ON PASSWORD****************
-    // if password mismatch
-    // ERR_PASSWDMISMATCH
+    if (!(sameStr(cmd.params[1], ctx->password)))
+    {
+        reply_error(cmd.command, ERR_PASSWDMISMATCH, connection);
+        return 0;
+    }
+    else {
+        // TODO with thread:
+        // increment ctx->irc_operators_hashtable->num_oper++;
+        // add user's nick to ctx->irc_operators_hashtable->irc_oper;
+        // turn is_irc_operator field in client_info_t to true;
+        send_reply(":You are now an IRC operator", RPL_YOUREOPER, connection);
+    }
 
-    // if correct
-    // RPL_YOUREOPER
+
 
     return 0;
 }
@@ -263,10 +280,37 @@ int handler_PONG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     //RPL_LUSERCLIENT, those who have put in both nick and user
-    //RPL_LUSEROP,
-    //RPL_LUSERUNKNOWN: haven't received any nick or user **
-    //RPL_LUSERCHANNELS,
-    //RPL_LUSERME: connections, excluding unknown ones **
+    int num_of_clients = ctx->num_connections;
+    int num_of_services = NUM_SERVICES;
+    int num_of_servers = NUM_SERVERS;
+    char luserclient[MAX_LEN_STR];
+    sprintf(luserclient, ":There are %d users and %d services on %d servers",
+            num_of_clients, num_of_services, num_of_servers);
+    send_reply(luserclient, RPL_LUSERCLIENT, connection);
+    //RPL_LUSEROP
+    int num_of_operators = ctx->irc_operators_hashtable->num_oper;
+    char luserop[MAX_LEN_STR];
+    sprintf(luserop, "%d :operator(s) online",
+            num_of_operators);
+    send_reply(luserop, RPL_LUSEROP, connection);
+    //RPL_LUSERUNKNOWN: haven't received any nick or user
+    int num_of_unknown_connections = ctx->num_unknown_connections;
+    char luserunknown[MAX_LEN_STR];
+    sprintf(luserunknown, "%d :unknown connection(s)",
+            num_of_unknown_connections);
+    send_reply(luserunknown, RPL_LUSERUNKNOWN, connection);
+    //RPL_LUSERCHANNELS
+    int num_of_channels = count_channels(&ctx->channels_hashtable);
+    char luserchannels[MAX_LEN_STR];
+    sprintf(luserchannels, "%d :channels formed",
+            num_of_channels);
+    send_reply(luserchannels, RPL_LUSERCHANNELS, connection);
+    //RPL_LUSERME: connections, excluding unknown ones 
+    int num_of_connections = ctx->num_connections;
+    char luserme[MAX_LEN_STR];
+    sprintf(luserme, ":I have %d clients and %d servers",
+            num_of_connections, NUM_SERVERS);
+    send_reply(luserme, RPL_LUSERME, connection);
     return 0;
 }
 
@@ -289,12 +333,11 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
     int num_handlers = sizeof(handlers) / sizeof(handler_entry_t);
     char *cmd = full_cmd.command;
     int i;
-    client_info_t *clients = ctx->clients_hashtable;
     for (i = 0; i < num_handlers; i++)
     {
         if (sameStr(cmd, handlers[i].name))
         {
-            if ((has_registered(connection->client_hostname, &clients)) || (sameStr(cmd, "NICK")) || (sameStr(cmd, "USER")))
+            if ((connection->registered) || (sameStr(cmd, "NICK")) || (sameStr(cmd, "USER")))
             {
                 handlers[i].func(full_cmd, connection, ctx);
                 break;

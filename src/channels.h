@@ -30,4 +30,6 @@ void add_channel(char *channel_name, channel_hb_t **channels);
 /* Remove channel from server */
 void remove_channel(char *channel_name, channel_hb_t **channels);
 
+//unsigned int count_channel_clients(channel_hb_t **channels);
+
 #endif

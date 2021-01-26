@@ -12,6 +12,9 @@
 #define JOIN_PAM 1 
 #define OPER_PAM 2  
 
+#define NUM_SERVERS 1
+#define NUM_SERVICES 1
+
 /* This struct breaks down a complete command 
  * into command and parameters
  */

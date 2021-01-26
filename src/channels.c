@@ -56,3 +56,10 @@ void remove_channel(char *channel_name, channel_hb_t **channels)
         HASH_DELETE(hh, *channels, channel);
     }
 }
+
+unsigned int count_channels(channel_hb_t **channels) {
+
+    return HASH_COUNT(*channels);
+}
+
+unsigned int count_channel_clients()
