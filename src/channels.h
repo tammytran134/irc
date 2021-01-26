@@ -9,6 +9,7 @@
 typedef struct channel_client {
     char *hostname; /* key */
     char *mode; /* value */
+    pthread_mutex_t lock;
     UT_hash_handle hh;
 } channel_client_t;
 

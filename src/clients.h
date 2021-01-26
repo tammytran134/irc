@@ -51,9 +51,9 @@ typedef struct nick_hb
 /* Add nick entry with hostname value to nicks hash table */
 void add_nick(char *nick, char *hostname, nick_hb_t **nicks);
 /* Remove client entry from nicks hash table and clients hashtable */
-void remove_nick(char *nick, nick_hb_t **nicks, client_info_t **clients);
+void remove_nick(char *nick, nick_hb_t **nicks);
 /* Get client information from clients hashtable with nick */
-client_info_t *get_client_with_nick(
+client_info_t *get_client_w_nick(
     char *nick,
     client_info_t **clients,
     nick_hb_t **nicks);

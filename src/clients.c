@@ -21,15 +21,13 @@ void add_nick(char *nick, char *hostname, nick_hb_t **nicks)
     return;
 }
 
-void remove_nick(char *nick, nick_hb_t **nicks, client_info_t **clients)
+void remove_nick(char *nick, nick_hb_t **nicks)
 {
     /* Remove client entry from nicks hash table and clients hashtable */
     nick_hb_t *nick_to_remove;
     HASH_FIND_STR(*nicks, nick, nick_to_remove);
     if (nick_to_remove != NULL)
     {
-        /* Remove from clients hashtable */
-        remove_client(nick_to_remove->hostname, clients);
         HASH_DELETE(hh, *nicks, nick_to_remove);
     }
 }
@@ -60,7 +58,7 @@ client_info_t *get_client_info(char *hostname, client_info_t **clients)
     return result;
 }
 
-client_info_t *get_client_with_nick(
+client_info_t *get_client_w_nick(
     char *nick,
     client_info_t **clients,
     nick_hb_t **nicks)
@@ -68,58 +66,30 @@ client_info_t *get_client_with_nick(
     /* Return pointer to client with given nick */
     nick_hb_t *nick_i;
     HASH_FIND_STR(*nicks, nick, nick_i);
-    if(nick_i != NULL) {
+    if (nick_i != NULL)
+    {
         return get_client_info(nick_i->hostname, clients);
     }
     return NULL;
 }
 
-bool has_entered_NICK(char *client_hostname, client_info_t **clients) 
+bool has_entered_NICK(char *client_hostname, client_info_t **clients)
 {
+    /* Checks if client has executed NICK command */
     client_info_t *client = get_client_info(client_hostname, clients);
-    if (client == NULL)
-    {
-        return false;
-    }
-    else {
-        if (client->info.nick == NULL) 
-        {
-            return false;
-        }
-        else {
-            return true;
-        }
-    }
-    return true;
+    return client != NULL && client->info.nick != NULL;
 }
 
 bool has_entered_USER(char *client_hostname, client_info_t **clients)
 {
+    /* Checks if client has executed USER command */
     client_info_t *client = get_client_info(client_hostname, clients);
-    if (client == NULL)
-    {
-        return false;
-    }
-    else {
-        if (client->info.username == NULL) 
-        {
-            return false;
-        }
-        else {
-            return true;
-        }
-    }
-    return true;
+    return client != NULL && client->info.username != NULL;
 }
 
 bool has_registered(char *client_hostname, client_info_t **clients)
 {
-    if ((has_entered_NICK(client_hostname, clients)) && (has_entered_USER(client_hostname, clients)))
-    {
-        return true;
-    }
-    else 
-    {
-        return false;
-    }
+    /* Checks if client has executed either the NICK and USER command */
+    return has_entered_NICK(client_hostname, clients) &&
+           has_entered_USER(client_hostname, clients);
 }

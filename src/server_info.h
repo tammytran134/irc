@@ -50,7 +50,17 @@ typedef struct worker_args
     server_ctx_t *ctx;
 } worker_args_t;
 
+/* Update number of known or unknown connections in server context object */
 void change_connection(server_ctx_t *ctx, int mode, int operator);
+/* Add client to server context object's clients hash table */
+void server_add_client(server_ctx_t *ctx, client_info_t *client);
+/* Remove client from server context object's clients hash table */
+void server_remove_client(server_ctx_t *ctx, char *hostname);
+/* Add nick to server context object's nicks hash table */
+void server_add_nick(server_ctx_t *ctx, char *nick, char *hostname);
+/* Remove nick from sever context object's nicks and hash table */
+void server_remove_nick(server_ctx_t *ctx, char *nick);
+
 
 
 #endif
