@@ -343,6 +343,8 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
     int num_handlers = sizeof(handlers) / sizeof(handler_entry_t);
     char *cmd = full_cmd.command;
     int i;
+    client_info_t *client = get_client_info(connection->client_hostname,
+                            &ctx->clients_hashtable);
     for (i = 0; i < num_handlers; i++)
     {
         if (sameStr(cmd, handlers[i].name))
@@ -354,12 +356,12 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
             }
             else
             {
-                reply_error(cmd, ERR_NOTREGISTERED, connection);
+                reply_error(cmd, ERR_NOTREGISTERED, connection, client);
             }
         }
     }
     if (i == num_handlers)
     {
-        reply_error(cmd, ERR_UNKNOWNCOMMAND, connection);
+        reply_error(cmd, ERR_UNKNOWNCOMMAND, connection, client);
     }
 }

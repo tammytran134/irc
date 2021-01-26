@@ -74,7 +74,7 @@ void reply_welcome(user_info_t user_info, connection_info_t *connection, client_
     server_reply(welcome_msg, RPL_WELCOME, connection, client);
     /* Send RPL_YOURHOST */
     char host_msg[MAX_LEN_STR];
-    sprintf(host_msg,":Your host is %s, running version %d",
+    sprintf(host_msg,":Your host is %s, running version %s",
             connection->server_hostname, VERSION);
     server_reply(host_msg, RPL_YOURHOST, connection, client);
     /* Send RPL_CREATED */
@@ -86,7 +86,7 @@ void reply_welcome(user_info_t user_info, connection_info_t *connection, client_
     server_reply(create_msg, RPL_CREATED, connection, client);
     /* Send RPL_MYINFO replies */
     char info_msg[MAX_LEN_STR];
-    sprintf(info_msg,":<servername> <version> ao mtov",
+    sprintf(info_msg,":%s %s ao mtov",
             connection->server_hostname, VERSION);
     server_reply(info_msg, RPL_MYINFO, connection, client);
 }

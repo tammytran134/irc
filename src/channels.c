@@ -62,4 +62,4 @@ unsigned int count_channels(channel_hb_t **channels) {
     return HASH_COUNT(*channels);
 }
 
-unsigned int count_channel_clients()
+//unsigned int count_channel_clients()

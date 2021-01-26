@@ -107,7 +107,7 @@
 #define ERR_UMODEUNKNOWNFLAG "501"
 #define ERR_USERSDONTMATCH "502"
 
-#define VERSION 1
+#define VERSION "1"
 
 void send_msg(char *msg, int client_socket);
 
