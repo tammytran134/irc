@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "channels.h"
 
@@ -26,9 +28,8 @@ void remove_channel_client(char *hostname, channel_client_t **clients)
     /* Remove client from channel */
     channel_client_t *client;
     HASH_FIND_STR(*clients, hostname, client);
-    if (client != NULL) {
+    if (client != NULL)
         HASH_DELETE(hh, *clients, client);
-    }
 }
 
 
@@ -57,9 +58,16 @@ void remove_channel(char *channel_name, channel_hb_t **channels)
     }
 }
 
-unsigned int count_channels(channel_hb_t **channels) {
-
-    return HASH_COUNT(*channels);
+bool contains_client(char *hostname, channel_client_t **clients)
+{
+    /* Check if channel contains client */
+    channel_client_t *result;
+    HASH_FIND_STR(*clients, hostname, result);
+    return result != NULL;
 }
 
-unsigned int count_channel_clients()
+unsigned int count_channels(channel_hb_t **channels) 
+{
+    /* Return number of channels */
+    return HASH_COUNT(*channels);
+}

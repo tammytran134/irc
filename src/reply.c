@@ -80,7 +80,7 @@ void reply_welcome(user_info_t user_info, connection_info_t *connection)
     send_reply(create_msg, RPL_CREATED, connection);
     /* Send RPL_MYINFO replies */
     char info_msg[MAX_LEN_STR];
-    sprintf(info_msg,"<servername> <version> ao mtov",
+    sprintf(info_msg,"%s %d ao mtov",
             connection->server_hostname, VERSION);
     send_reply(info_msg, RPL_MYINFO, connection);
 

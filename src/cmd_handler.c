@@ -89,7 +89,7 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                 server_remove_nick(ctx, nickname);
                 server_add_nick(ctx, nickname, client->hostname);
             }
-            else 
+            else
             {
                 /* Client has not entered NICK */
                 client->info.nick = malloc(sizeof(char) * strlen(nickname));
@@ -117,7 +117,6 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     return 0;
 }
 
-
 int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     if (!(check_cmd(cmd.num_params, USER_PAM, "==")))
@@ -142,7 +141,7 @@ int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                                                     &ctx->clients_hashtable);
             client->info.username = malloc(sizeof(char) * strlen(username));
             client->info.realname = malloc(sizeof(char) * strlen(realname));
-            if(client->info.nick != NULL)
+            if (client->info.nick != NULL)
             {
                 reply_welcome(client->info, connection);
                 /* Client has not been registered */
@@ -160,14 +159,43 @@ int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
 int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
-    // send closing link hostname, msg
-    // remove user from all hash tables - channels, systems
-    // relay back to the channels that the users are in
-
-    /* TODO:
-         * if (NICK == NULL || USER == NULL) -> decr_unknown_connectons
-         * if (NICK != NULL && USER != NULL) -> 
-         */
+    /* QUIT command handler:
+     * Update number of known/unknown connections
+     * Remove client from server object context's hash tables
+     * Send messages to client and channels acorrdingly
+     */
+    char *hostname = connection->client_hostname;
+    client_info_t **clients = &ctx->clients_hashtable;
+    if (!has_entered_NICK(hostname, clients) &&
+        !has_entered_USER(hostname, clients))
+    {
+        /* -1 number of unknown connections */
+        change_connection(ctx, UNKNOWN, DECR);
+    }
+    else
+    {
+        nick_hb_t **nicks = &ctx->nicks_hashtable;
+        channel_hb_t **channels = &ctx->channels_hashtable;
+        client_info_t *client = get_client_info(hostname, clients);
+        /* Remove from nicks hash table */
+        if (client != NULL && client->info.nick != NULL)
+            server_remove_nick(ctx, client->info.nick);
+        /* Remove from clients hash table */
+        server_remove_client(ctx, hostname);
+        /* Iterate through channels that client is in */
+        channel_hb_t *chan;
+        for (chan = *channels; chan != NULL; chan = chan->hh.next)
+        {
+            if (contains_client(hostname, &chan->channel_clients))
+            {
+                server_remove_chan_client(chan, hostname);
+                // TODO: send msg to other members in channel
+            }
+        }
+        /* -1 number of known connections */
+        change_connection(ctx, KNOWN, DECR);
+        // TODO: send closing link, hostname
+    }
     return 0;
 }
 
@@ -184,6 +212,10 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     // if doesnt create channel
     // reply RPL_NAMREPLY and RPL_ENDOFNAMES
     // relay message to all members of channel and user
+    else
+    {
+        channel_hb_t *channel;
+    }
     return 0;
 }
 
@@ -250,15 +282,14 @@ int handler_OPER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         reply_error(cmd.command, ERR_PASSWDMISMATCH, connection);
         return 0;
     }
-    else {
+    else
+    {
         // TODO with thread:
         // increment ctx->irc_operators_hashtable->num_oper++;
         // add user's nick to ctx->irc_operators_hashtable->irc_oper;
         // turn is_irc_operator field in client_info_t to true;
         send_reply(":You are now an IRC operator", RPL_YOUREOPER, connection);
     }
-
-
 
     return 0;
 }
@@ -305,7 +336,7 @@ int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     sprintf(luserchannels, "%d :channels formed",
             num_of_channels);
     send_reply(luserchannels, RPL_LUSERCHANNELS, connection);
-    //RPL_LUSERME: connections, excluding unknown ones 
+    //RPL_LUSERME: connections, excluding unknown ones
     int num_of_connections = ctx->num_connections;
     char luserme[MAX_LEN_STR];
     sprintf(luserme, ":I have %d clients and %d servers",
@@ -337,7 +368,9 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
     {
         if (sameStr(cmd, handlers[i].name))
         {
-            if ((connection->registered) || (sameStr(cmd, "NICK")) || (sameStr(cmd, "USER")))
+            if ((connection->registered) ||
+                (sameStr(cmd, "NICK")) ||
+                (sameStr(cmd, "USER")))
             {
                 handlers[i].func(full_cmd, connection, ctx);
                 break;

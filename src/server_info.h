@@ -5,7 +5,7 @@
 #include "clients.h"
 #include "channels.h"
 
-#define MAX_PARAMS  15
+#define MAX_PARAMS 15
 #define MAX_MSG_LEN 512
 #define MAX_STR_LEN 1024
 #define MAX_BUF_LEN 100
@@ -17,7 +17,7 @@
 typedef struct irc_oper
 {
     char *hostname; /* key */
-    char *mode; /* value */
+    char *mode;     /* value */
     UT_hash_handle hh;
 } irc_oper_t;
 
@@ -60,7 +60,9 @@ void server_remove_client(server_ctx_t *ctx, char *hostname);
 void server_add_nick(server_ctx_t *ctx, char *nick, char *hostname);
 /* Remove nick from sever context object's nicks and hash table */
 void server_remove_nick(server_ctx_t *ctx, char *nick);
-
-
+/* Add client to channel in server context object's channels hash table */
+void server_add_chan_client(channel_hb_t *channel, char *hostname,char *mode);
+/* Remove client from channel in server context object's channels hash table */
+void server_remove_chan_client(channel_hb_t *channel, char *hostname);
 
 #endif
