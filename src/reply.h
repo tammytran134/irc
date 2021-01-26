@@ -107,23 +107,17 @@
 #define ERR_UMODEUNKNOWNFLAG "501"
 #define ERR_USERSDONTMATCH "502"
 
-#define VERSION 1
-
-typedef struct connection_info
-{
-    int client_socket;
-    char *server_hostname;
-    char *client_hostname;
-    bool registered;
-} connection_info_t;
+#define VERSION "1"
 
 void send_msg(char *msg, int client_socket);
 
 /* Error message */
-void reply_error(char *cmd, char *reply_code, connection_info_t *connection);
-void send_reply(char *msg, char *reply_code, connection_info_t *connection);
+void reply_error(char *cmd, char *reply_code, connection_info_t *connection, client_info_t *client);
+void server_reply(char *msg, char *reply_code, connection_info_t *connection, client_info_t *client);
+void relay_reply(char *msg, connection_info_t *connection, 
+                client_info_t *sender, client_info_t *receiver);
 
 /* Welcome message */
-void reply_welcome(user_info_t user_info, connection_info_t *connection);
+void reply_welcome(user_info_t user_info, connection_info_t *connection, client_info_t *client);
 
 #endif /* REPLY_H_ */

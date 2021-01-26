@@ -50,6 +50,14 @@ typedef struct worker_args
     server_ctx_t *ctx;
 } worker_args_t;
 
+typedef struct connection_info
+{
+    int client_socket;
+    char *server_hostname;
+    char *client_hostname;
+    bool registered;
+} connection_info_t;
+
 /* Update number of known or unknown connections in server context object */
 void change_connection(server_ctx_t *ctx, int mode, int operator);
 /* Add client to server context object's clients hash table */
@@ -64,5 +72,8 @@ void server_remove_nick(server_ctx_t *ctx, char *nick);
 void server_add_chan_client(channel_hb_t *channel, char *hostname,char *mode);
 /* Remove client from channel in server context object's channels hash table */
 void server_remove_chan_client(channel_hb_t *channel, char *hostname);
+void send_final(client_info_t *receiver, char *msg);
+
+
 
 #endif

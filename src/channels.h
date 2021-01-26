@@ -32,7 +32,11 @@ typedef struct channel_hb {
 void add_channel(char *channel_name, channel_hb_t **channels);
 /* Remove channel from server */
 void remove_channel(char *channel_name, channel_hb_t **channels);
-/* Return number of channels */
+
 unsigned int count_channels(channel_hb_t **channels);
+
+unsigned int count_channel_clients(channel_client_t **channel);
+
+channel_hb_t *get_channel_info(char *channel_name, channel_hb_t **channels);
 
 #endif

@@ -104,6 +104,14 @@ void server_remove_chan_client(channel_hb_t *channel, char *hostname)
     pthread_mutex_unlock(&channel->lock);
 }
 
+void send_final(client_info_t *receiver, char *msg) 
+{
+    pthread_mutex_lock(&receiver->lock);
+    send(receiver->client_socket, msg, strlen(msg), 0);
+    pthread_mutex_lock(&receiver->lock);
+}
+
+
 //void join_channel(server_info *ctx, *client)
 //{
 // call function from channels.h
