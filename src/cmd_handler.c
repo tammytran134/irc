@@ -73,8 +73,9 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         }
         else {
             /* TODO: implement nick
-             * remember to see if we need to send reply welcome
-             * or decrease unknown connection
+             * if nick is first command, decrease unknown connection
+             * if nick is second command, send reply welcome
+             * and turn registered field in connection_info_t to true;
              */
         }
     }
@@ -90,6 +91,10 @@ int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     }
     else
     {
+        if (connection->registered)
+        {
+            reply_error(cmd.command, ERR_ALREADYREGISTRED, connection);
+        }
         //if already register - check the hashtable
         // ERR_ALREADYREGISTRED
         //
@@ -239,11 +244,10 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
     int num_handlers = sizeof(handlers) / sizeof(handler_entry_t);
     char *cmd = full_cmd.command;
     int i;
-    client_info_t *clients = ctx->clients_hashtable;
     for (i = 0; i < num_handlers; i++) 
     {
         if (sameStr(cmd, handlers[i].name)) {
-            if ((has_registered(connection->client_hostname, &clients)) || (sameStr(cmd, "NICK")) || (sameStr(cmd, "USER")))
+            if ((connection->registered) || (sameStr(cmd, "NICK")) || (sameStr(cmd, "USER")))
             {
                 handlers[i].func(full_cmd, connection, ctx);
                 break;
