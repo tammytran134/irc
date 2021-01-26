@@ -94,7 +94,8 @@ void *service_single_client(void *args) {
      * unknown_connection field in ctx when client quits
      */
     client_info_t *clients = ctx->clients_hashtable;
-    if ((has_entered_NICK(client_hostname, &clients)) || (has_entered_USER(client_hostname, &clients)))
+    if (has_entered_NICK(client_hostname, &clients) || 
+        has_entered_USER(client_hostname, &clients))
     {
         change_connection(ctx, UNKNOWN, DECR);
     }

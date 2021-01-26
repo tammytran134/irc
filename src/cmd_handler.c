@@ -63,19 +63,49 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     else
     {
         client_info_t *clients = ctx->clients_hashtable;
+        client_info_t *current_client;
         nick_hb_t *nicks = ctx->nicks_hashtable;
         char *nickname = cmd.params[0];
-        client_info_t *nick = get_client_with_nick(nickname, &clients, &nicks);
+        client_info_t *client = get_client_w_nick(nickname, &clients, &nicks);
         //if nickname is already in hash table nick
-        if (nick != NULL)
+        if (client != NULL && client->hostname != connection->client_hostname)
         {
+            /* Nick is already in use and belongs to another client */
             reply_error(nickname, ERR_NICKNAMEINUSE, connection);
+            return 0;
+        } 
+        else if (client == NULL) 
+        {
+            /* Client has not entered NICK */
+            client = get_client_info(connection->client_hostname, &clients);
+            client->info.nick = malloc(sizeof(char) * strlen(nickname));
+            strcpy(client->info.nick, nickname);
+
+            /* Add client's nick to server's nicks hash table */
+            server_add_nick(ctx, nickname, connection->client_hostname);
+            if(!connection->registered) 
+            {
+                /* Update client's connection status */
+                connection->registered = true;
+                change_connection(ctx, UNKNOWN, DECR);
+                change_connection(ctx, KNOWN, INCR);
+            }
+            if(client->info.username != NULL) 
+            {
+                /* Client has entered USER */
+                reply_welcome(client->info, RPL_WELCOME, connection);
+            }
         }
-        else {
-            /* TODO: implement nick
-             * remember to see if we need to send reply welcome
-             * or decrease unknown connection
-             */
+        else
+        {
+            /* Client has entered NICK before (client != NULL) */
+            free(client->info.nick);
+            /* Update nick in client's entry in clients hash table */
+            client->info.nick = malloc(sizeof(char) * strlen(nickname));
+            strcpy(client->info.nick, nickname);
+            /* Update nick in nicks hashtable */
+            server_remove_nick(ctx, nickname);
+            server_add_nick(ctx, nickname, client->hostname);
         }
     }
 

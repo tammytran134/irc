@@ -9,9 +9,9 @@
 #include "server_info.h"
 
 /* Functions related to thread/mutex */
-// unknown connections, num connections, 
 void change_connection(server_ctx_t *ctx, int mode, int operator)
 {
+    /* Update number of known or unknown connections */
     if (mode == UNKNOWN)
     {
         if (operator == INCR)
@@ -51,6 +51,38 @@ void change_connection(server_ctx_t *ctx, int mode, int operator)
     else {
         return;
     }
+}
+
+void server_add_client(server_ctx_t *ctx, client_info_t *client)
+{
+    /* Add client to server context object's clients hash table */
+    pthread_mutex_lock(&ctx->clients_hashtable->lock);
+    add_client(client, &ctx->clients_hashtable);
+    pthread_mutex_unlock(&ctx->clients_hashtable->lock);
+}
+
+void server_remove_client(server_ctx_t *ctx, char *hostname)
+{
+    /* Remove client from server context object's clients hash table */
+    pthread_mutex_lock(&ctx->clients_hashtable->lock);
+    remove_client(hostname, &ctx->clients_hashtable);
+    pthread_mutex_unlock(&ctx->clients_hashtable->lock);
+}
+
+void server_add_nick(server_ctx_t *ctx, char *nick, char *hostname)
+{
+    /* Add nick to server context object's nicks hash table */
+    pthread_mutex_lock(&ctx->nicks_hashtable->lock);
+    add_nick(nick, hostname, &ctx->nicks_hashtable);
+    pthread_mutex_unlock(&ctx->nicks_hashtable->lock);
+}
+
+void server_remove_nick(server_ctx_t *ctx, char *nick)
+{
+    /* Remove nick from sever context object's nicks and hash table */
+    pthread_mutex_lock(&ctx->nicks_hashtable->lock);
+    remove_nick(nick, &ctx->nicks_hashtable);
+    pthread_mutex_unlock(&ctx->nicks_hashtable->lock);
 }
 
 
