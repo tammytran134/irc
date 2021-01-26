@@ -176,9 +176,13 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     }
     else
     {
+        char *msg = (cmd.params[0] == NULL) ? "Client Quit" : cmd.params[0];
+        char server_msg[MAX_LEN_STR];
         nick_hb_t **nicks = &ctx->nicks_hashtable;
         channel_hb_t **channels = &ctx->channels_hashtable;
         client_info_t *client = get_client_info(hostname, clients);
+        sprintf(server_msg, ":%s!%s@%s QUIT :%s", client->info.nick, 
+        client->info.username, connection->client_hostname, msg);
         /* Remove from nicks hash table */
         if (client != NULL && client->info.nick != NULL)
             server_remove_nick(ctx, client->info.nick);
@@ -191,12 +195,13 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             if (contains_client(hostname, &chan->channel_clients))
             {
                 server_remove_chan_client(chan, hostname);
-                // TODO: send msg to other members in channel
+                server_send_chan_client(chan->channel_clients, server_msg, ctx);
             }
         }
         /* -1 number of known connections */
         change_connection(ctx, KNOWN, DECR);
-        // TODO: send closing link, hostname
+        char reply_msg[MAX_LEN_STR];
+        sprintf(reply_msg, "ERROR :Closing Link: %s (%s)", connection->server_hostname, msg);
     }
     return 0;
 }

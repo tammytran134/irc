@@ -66,6 +66,10 @@ bool contains_client(char *hostname, channel_client_t **clients)
     return result != NULL;
 }
 
+unsigned int count_channels(channel_hb_t **channels) {
+    return HASH_COUNT(*channels);
+}
+
 unsigned int count_channel_clients(channel_client_t **channel) 
 {
     /* Return number of channels clients on server */

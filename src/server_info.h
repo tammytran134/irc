@@ -72,6 +72,7 @@ void server_remove_nick(server_ctx_t *ctx, char *nick);
 void server_add_chan_client(channel_hb_t *channel, char *hostname,char *mode);
 /* Remove client from channel in server context object's channels hash table */
 void server_remove_chan_client(channel_hb_t *channel, char *hostname);
+void server_send_chan_client(channel_client_t *clients, char *msg, server_ctx_t *ctx);
 void send_final(client_info_t *receiver, char *msg);
 
 
