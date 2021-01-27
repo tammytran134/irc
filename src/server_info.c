@@ -88,7 +88,8 @@ void server_remove_nick(server_ctx_t *ctx, char *nick)
     pthread_mutex_unlock(&ctx->nicks_lock);
 }
 
-void server_add_chan_client(channel_hb_t *channel, char *hostname, bool is_oper)
+void server_add_chan_client(channel_hb_t *channel, char *hostname, 
+                            bool is_oper)
 {
     /* Add channel client in server context object's channels hash table */
     pthread_mutex_lock(&channel->lock);

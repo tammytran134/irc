@@ -122,6 +122,7 @@ void relay_reply(char *msg, connection_info_t *connection,
                 client_info_t *sender, client_info_t *receiver);
 
 /* Welcome message */
-void reply_welcome(user_info_t user_info, connection_info_t *connection, client_info_t *client);
+void reply_welcome(user_info_t user_info, connection_info_t *connection, 
+                    client_info_t *client);
 
 #endif /* REPLY_H_ */
