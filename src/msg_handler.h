@@ -29,7 +29,7 @@ typedef struct msg
  * It also takes in the client hashtable, client's server info
  * and host server info to pass these inputs to exec_msg
  */
-msg_t recv_msg(char *buf, msg_t rmsg, server_ctx_t *ctx,
+void recv_msg(char *buf, msg_t *rmsg, server_ctx_t *ctx,
                connection_info_t *connection);
 
 /* This function parses a complete command and 

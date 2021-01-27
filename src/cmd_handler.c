@@ -902,7 +902,6 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
             if ((registered) || (sameStr(cmd, "NICK")) || 
                                                         (sameStr(cmd, "USER")))
             {
-                //printf("ERROR 2a\n");
                 print_cmd(full_cmd);
                 handlers[i].func(full_cmd, connection, ctx);
                 break;
@@ -912,7 +911,6 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
                 // If client hasn't completed registration,
                 // return ERR_NOTREGISTERED
                 reply_error(cmd, ERR_NOTREGISTERED, connection, client);
-                //printf("ERROR 3a\n");
                 break;
             }
         }
