@@ -273,7 +273,7 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             strcpy(nickname, client->info.nick);
             if (i == 0)
             {
-                sprintf(single_msg, ":%s", nickname);
+                sprintf(single_msg, ":@%s", nickname);
             }
             else
             {
