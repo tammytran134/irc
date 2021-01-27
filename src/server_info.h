@@ -69,9 +69,15 @@ void server_add_nick(server_ctx_t *ctx, char *nick, char *hostname);
 /* Remove nick from sever context object's nicks and hash table */
 void server_remove_nick(server_ctx_t *ctx, char *nick);
 /* Add client to channel in server context object's channels hash table */
-void server_add_chan_client(channel_hb_t *channel, char *hostname,char *mode);
+void server_add_chan_client(channel_hb_t *channel, char *hostname);
 /* Remove client from channel in server context object's channels hash table */
 void server_remove_chan_client(channel_hb_t *channel, char *hostname);
+/* Add channel to server context object's channels hash table */
+void server_add_channel(server_ctx_t *ctx, char *channel_name);
+/* Remove channel from server context object's channels hash table */
+void server_remove_channel(server_ctx_t *ctx, char *channel_name);
+
+/* Wrapper function to send message to a client socket */
 void send_final(client_info_t *receiver, char *msg);
 
 

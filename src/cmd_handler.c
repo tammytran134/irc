@@ -122,7 +122,7 @@ int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     char *client_hostname = connection->client_hostname;
     client_info_t *client = get_client_info(client_hostname,
-                            &ctx->clients_hashtable);
+                                            &ctx->clients_hashtable);
     if (!(check_cmd(cmd.num_params, USER_PAM, "==")))
     {
         reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection, client);
@@ -203,11 +203,17 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
 int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
-    client_info_t *client = get_client_info(connection->client_hostname,
-                            &ctx->clients_hashtable);
+    /* JOIN COMMAND: 
+     * Parse single parameter channel name from cmd
+     * Create channel if channel with given channel name does not exist
+     * Add client as member of channel
+     * Send messages accordingly
+     */
+    client_info_t *curr_client = get_client_info(connection->client_hostname,
+                                            &ctx->clients_hashtable);
     if (!(check_cmd(cmd.num_params, JOIN_PAM, "==")))
     {
-        reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection, client);
+        reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection, curr_client);
         return 0;
     }
     // else
@@ -219,7 +225,52 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     // relay message to all members of channel and user
     else
     {
-        channel_hb_t *channel;
+        char *channel_name = cmd.params[0];
+        channel_hb_t *channels = ctx->channels_hashtable;
+        channel_hb_t *channel = get_channel_info(channel_name, &channels);
+        if (channel == NULL)
+        {
+            /* Create channel with first user */
+            server_add_channel(ctx, channel_name);
+        }
+        /* Add client to channel */
+        server_add_chan_client(channel, connection->client_hostname);
+
+        /* Send RPL_NAMREPLY AND RPL_ENDOFNAMES to client */
+        char reply_msg[MAX_LEN_STR];
+        char single_msg[MAX_LEN_STR];
+        char nickname[MAX_LEN_STR];
+        client_info_t *client;
+        channel = get_channel_info(channel_name, &channels);
+        channel_client_t *chan_clients = channel->channel_clients;
+        channel_client_t *chan_client;
+        
+        int i = 0;
+        char *hostname;
+        sprintf(single_msg, " = #%s ", channel_name);
+        strcat(reply_msg, single_msg);
+        for (chan_client = chan_clients; chan_client != NULL;
+             chan_client = chan_client->hh.next)
+        {
+            hostname = chan_client->hostname;
+            client = get_client_info(hostname, &ctx->clients_hashtable);
+            strcpy(nickname, client->info.nick);
+            if (i == 0)
+            {
+                sprintf(single_msg, ":%s", nickname);
+            }
+            else
+            {
+                sprintf(single_msg, " %s", nickname);
+            }
+            strcat(reply_msg, single_msg);
+        }
+        server_reply(reply_msg, RPL_NAMREPLY, connection, curr_client);
+        sprintf(reply_msg, "#%s :End of NAMES list", channel_name);
+        server_reply(reply_msg, RPL_ENDOFNAMES, connection, curr_client);
+
+        /* Send notification to other members of channel */
+        // TODO: impl
     }
     return 0;
 }
@@ -259,10 +310,10 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     int num_channel_clients;
     char *channel_name;
     client_info_t *client = get_client_info(connection->client_hostname,
-                            &ctx->clients_hashtable);
+                                            &ctx->clients_hashtable);
     if (cmd.num_params == 0)
     {
-        for (channel=channels; channel != NULL; channel=channels->hh.next) 
+        for (channel = channels; channel != NULL; channel = channels->hh.next)
         {
             channel_name = channel->channel_name;
             num_channel_clients = count_channel_clients(&channel->channel_clients);
@@ -272,11 +323,11 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         server_reply(reply_msg, RPL_LIST, connection, client);
         server_reply(":End of LIST", RPL_LISTEND, connection, client);
     }
-    else 
+    else
     {
         channel_name = cmd.params[0];
         channel_hb_t *channel = get_channel_info(channel_name,
-                        &ctx->channels_hashtable);
+                                                 &ctx->channels_hashtable);
         num_channel_clients = count_channel_clients(&channel->channel_clients);
         sprintf(single_msg, "%s # %d:\r\n", channel_name, num_channel_clients);
         server_reply(reply_msg, RPL_LIST, connection, client);
@@ -304,7 +355,7 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 int handler_OPER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     client_info_t *client = get_client_info(connection->client_hostname,
-                            &ctx->clients_hashtable);
+                                            &ctx->clients_hashtable);
     if (!(check_cmd(cmd.num_params, OPER_PAM, "==")))
     {
         reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection, client);
@@ -330,7 +381,7 @@ int handler_OPER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 int handler_PING(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     client_info_t *client = get_client_info(connection->client_hostname,
-                            &ctx->clients_hashtable);
+                                            &ctx->clients_hashtable);
     char reply_msg[MAX_LEN_STR];
     sprintf(reply_msg, "PONG %s\r\n", connection->server_hostname);
     send_final(client, reply_msg);
@@ -346,7 +397,7 @@ int handler_PONG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     client_info_t *client = get_client_info(connection->client_hostname,
-                            &ctx->clients_hashtable);
+                                            &ctx->clients_hashtable);
     //RPL_LUSERCLIENT, those who have put in both nick and user
     int num_of_clients = ctx->num_connections;
     int num_of_services = NUM_SERVICES;
@@ -373,7 +424,7 @@ int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     sprintf(luserchannels, "%d :channels formed",
             num_of_channels);
     server_reply(luserchannels, RPL_LUSERCHANNELS, connection, client);
-    //RPL_LUSERME: connections, excluding unknown ones 
+    //RPL_LUSERME: connections, excluding unknown ones
     int num_of_connections = ctx->num_connections;
     char luserme[MAX_LEN_STR];
     sprintf(luserme, ":I have %d clients and %d servers",
@@ -402,7 +453,7 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
     char *cmd = full_cmd.command;
     int i;
     client_info_t *client = get_client_info(connection->client_hostname,
-                            &ctx->clients_hashtable);
+                                            &ctx->clients_hashtable);
     for (i = 0; i < num_handlers; i++)
     {
         if (sameStr(cmd, handlers[i].name))

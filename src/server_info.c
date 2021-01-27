@@ -88,11 +88,11 @@ void server_remove_nick(server_ctx_t *ctx, char *nick)
     pthread_mutex_unlock(&ctx->nicks_hashtable->lock);
 }
 
-void server_add_chan_client(channel_hb_t *channel, char *hostname, char *mode)
+void server_add_chan_client(channel_hb_t *channel, char *hostname)
 {
     /* Add channel client in server context object's channels hash table */
     pthread_mutex_lock(&channel->lock);
-    add_channel_client(hostname, mode, &channel->channel_clients);
+    add_channel_client(hostname, &channel->channel_clients);
     pthread_mutex_unlock(&channel->lock);
 }
 
@@ -104,8 +104,25 @@ void server_remove_chan_client(channel_hb_t *channel, char *hostname)
     pthread_mutex_unlock(&channel->lock);
 }
 
+void server_add_channel(server_ctx_t *ctx, char *channel_name)
+{
+    /* Add channel to server context object's channels hash table */
+    pthread_mutex_lock(&ctx->channels_hashtable->lock);
+    add_channel(channel_name, &ctx->channels_hashtable);
+    pthread_mutex_unlock(&ctx->channels_hashtable->lock);
+}
+
+void server_remove_channel(server_ctx_t *ctx, char *channel_name)
+{
+    /* Remove channel from server context object's channels hash table */
+    pthread_mutex_lock(&ctx->channels_hashtable->lock);
+    remove_channel(channel_name, &ctx->channels_hashtable);
+    pthread_mutex_unlock(&ctx->channels_hashtable->lock);
+}
+
 void send_final(client_info_t *receiver, char *msg) 
 {
+    /* Wrapper function to send message to a client socket */
     pthread_mutex_lock(&receiver->lock);
     send(receiver->client_socket, msg, strlen(msg), 0);
     pthread_mutex_lock(&receiver->lock);
