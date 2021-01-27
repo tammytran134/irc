@@ -101,4 +101,6 @@ bool add_irc_operator(irc_oper_t **irc_opers, char *hostname, char *mode);
 
 void server_add_irc_operator(server_ctx_t *ctx, char *hostname, char *mode);
 
+void server_close_socket (server_ctx_t *ctx, int client_socket);
+
 #endif

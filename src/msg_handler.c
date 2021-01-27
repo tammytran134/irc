@@ -175,6 +175,7 @@ cmd_t parse_msg(char *msg_buffer)
                     param_is_rest = true;
                 token = strtok(token, ":");
                 strcpy(parsed_msg.params[counter - 1], token);
+                printf ("token 1 is %s", token);
             }
             else
             {
@@ -189,6 +190,7 @@ cmd_t parse_msg(char *msg_buffer)
                 size_t new_param_size = sizeof(char) * concat_param_len;
                 parsed_msg.params[counter - 1] = malloc(new_param_size);
                 strcpy(parsed_msg.params[counter - 1], concat_param);
+                printf ("token 2 is %s", token);
             }
         }
 
@@ -201,7 +203,7 @@ cmd_t parse_msg(char *msg_buffer)
     }
 
     parsed_msg.num_params = param_is_rest ? counter : counter-1;
-
+    printf ("Num of params is %d\n", parsed_msg.num_params);
     return parsed_msg;
 }
 

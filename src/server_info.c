@@ -172,3 +172,10 @@ void server_add_irc_operator(server_ctx_t *ctx, char *hostname, char *mode)
     }
     pthread_mutex_unlock(&ctx->operators_lock);
 }
+
+void server_close_socket (server_ctx_t *ctx, int client_socket)
+{
+    pthread_mutex_lock(&ctx->lock);
+    close(client_socket);
+    pthread_mutex_unlock(&ctx->lock);
+}

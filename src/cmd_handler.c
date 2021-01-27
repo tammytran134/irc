@@ -264,7 +264,7 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         printf ("change connection is fine\n");
 
     }
-    close(client_socket);
+    server_close_socket(ctx, client_socket);
     pthread_exit(NULL);
     return 0;
 }

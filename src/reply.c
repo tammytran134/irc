@@ -59,17 +59,17 @@ void reply_error(char *cmd, char *reply_code,
     }
     else if (strcmp(reply_code, ERR_CANNOTSENDTOCHAN) == 0)
     {
-        sprintf(reply_msg, "#%s :Cannot send to channel", cmd);
+        sprintf(reply_msg, "%s :Cannot send to channel", cmd);
         server_reply(reply_msg, reply_code, connection, client);
     }
     else if (strcmp(reply_code, ERR_NOSUCHCHANNEL) == 0)
     {
-        sprintf(reply_msg, "#%s :No such channel", cmd);
+        sprintf(reply_msg, "%s :No such channel", cmd);
         server_reply(reply_msg, reply_code, connection, client);
     }
     else if (strcmp(reply_code, ERR_CHANOPRIVSNEEDED) == 0)
     {
-        sprintf(reply_msg, "#%s :You're not channel operator", cmd);
+        sprintf(reply_msg, "%s :You're not channel operator", cmd);
         server_reply(reply_msg, reply_code, connection, client);
     }
     else
