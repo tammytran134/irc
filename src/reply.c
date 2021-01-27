@@ -136,9 +136,6 @@ void relay_reply(char *msg, connection_info_t *connection,
                  client_info_t *sender, client_info_t *receiver)
 {
     char reply_msg[MAX_LEN_STR];
-    printf ("sender nick is %s\n", sender->info.nick);
-    printf ("sender username is %s\n", sender->info.username);
-    printf ("sender hostname is %s\n", connection->client_hostname);
     sprintf(reply_msg, ":%s!%s@%s %s\r\n", sender->info.nick, 
                                             sender->info.username, 
                                             connection->client_hostname, msg);
