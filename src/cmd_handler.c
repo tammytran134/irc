@@ -241,21 +241,24 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         /* Add client to channel */
         server_add_chan_client(channel, connection->client_hostname);
 
+        /* Channel data after operation */
+        channel = get_channel_info(channel_name, &channels);
+        channel_client_t *chan_clients = channel->channel_clients;
+
         /* Send notification to other members of channel */
-        sprintf(reply_msg, ":%s!%s@%s JOIN #%s",
+        char msg[MAX_LEN_STR];
+        sprintf(msg, ":%s!%s@%s JOIN #%s",
                 curr_client->info.nick,
                 curr_client->info.username,
                 curr_client->hostname,
                 channel_name);
-        server_send_chan_client(ctx->clients_hashtable, reply_msg, ctx);
+        server_send_chan_client(chan_clients, msg, ctx);
 
         /* Send RPL_NAMREPLY AND RPL_ENDOFNAMES to client */
         char reply_msg[MAX_LEN_STR];
         char single_msg[MAX_LEN_STR];
         char nickname[MAX_LEN_STR];
         client_info_t *client;
-        channel = get_channel_info(channel_name, &channels);
-        channel_client_t *chan_clients = channel->channel_clients;
         channel_client_t *chan_client;
 
         int i = 0;
