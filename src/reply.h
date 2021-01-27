@@ -109,13 +109,39 @@
 
 #define VERSION "1"
 
-void send_msg(char *msg, int client_socket);
 
-/* Error message */
-void reply_error_mult(char *cmd1, char *cmd2, char *reply_code, 
-                connection_info_t *connection, client_info_t *client);
+
+/* This 2 functions below specifically deal with sending
+ * error messages to client
+ */
+
+/* This function takes in the string that needs to be
+ * passed into the reply, the reply code, and
+ * connection_info_t and client_info_t that has
+ * client's and server's information to construct
+ * error reply messages
+ * and pass these reply messages to server_reply
+ */
 void reply_error(char *cmd, char *reply_code, connection_info_t *connection, 
                 client_info_t *client);
+
+/* This function takes in 2 strings that need to be
+ * passed into the reply, the reply code, and
+ * connection_info_t and client_info_t that has
+ * client's and server's information to construct
+ * error reply messages
+ * and pass these reply messages to server_reply
+ */
+void reply_error_mult(char *cmd1, char *cmd2, char *reply_code, 
+                connection_info_t *connection, client_info_t *client);
+
+
+/* Server_reply function deals with sending messages
+ * to the client, it takes in the messages that 
+ * we want to send, the reply code, and
+ * connection_info_t and client_info_t that has
+ * client's and server's information
+ */
 void server_reply(char *msg, char *reply_code, connection_info_t *connection, 
                 client_info_t *client);
 void relay_reply(char *msg, connection_info_t *connection, 
