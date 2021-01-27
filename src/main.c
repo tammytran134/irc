@@ -59,6 +59,7 @@
 #include "clients.h"
 
 void *service_single_client(void *args) {
+    printf ("it comes to service_single_client\n");
     worker_args_t *wa;
     server_ctx_t *ctx;
     int client_socket;

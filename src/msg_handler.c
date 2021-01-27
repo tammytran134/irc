@@ -43,6 +43,7 @@ msg_t recv_msg(
      * This message returns the updated msg_t struct back to the main function,
      * so that the msg_t state gets updated between each recv() call
      */
+    printf ("it comes to recv_msg\n");
     char c;
     for (int i = 0; i < strlen(buf); i++)
     {
