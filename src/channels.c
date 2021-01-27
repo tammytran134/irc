@@ -44,17 +44,13 @@ channel_client_t* get_channel_client(char *hostname,
 void add_channel(char *name, channel_hb_t **channels)
 {
     /* Add channel to server */
-    channel_hb_t *channel;
-    HASH_FIND_STR(*channels, name, channel);
-    if (channel == NULL)
-    {
-        channel = malloc(sizeof(channel_hb_t));
-        channel->channel_clients = NULL;
-        channel->channel_name = malloc(sizeof(char) * strlen(name));
-        strcpy(channel->channel_name, name);
-        pthread_mutex_init(&channel->lock, NULL);
-        HASH_ADD_STR(*channels, channel_name, channel);
-    }
+    channel_hb_t *channel = malloc(sizeof(*channel));
+    channel->channel_clients = NULL;
+    channel->channel_name = malloc(sizeof(char) * strlen(name));
+    strcpy(channel->channel_name, name);
+    printf("channel->channel_name: %s\n", channel->channel_name);
+    pthread_mutex_init(&channel->lock, NULL);
+    HASH_ADD_STR(*channels, channel_name, channel);
 }
 
 void remove_channel(char *channel_name, channel_hb_t **channels)

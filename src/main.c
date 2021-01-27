@@ -99,7 +99,6 @@ void *service_single_client(void *args) {
         connection->server_hostname = server_hostname;
         connection->client_hostname = client_hostname;
         rmsg = recv_msg(buf, rmsg, ctx, connection);
-        printf("gets here tho\n");
     }
     /* if client's connection is unknown, change the 
      * unknown_connection field in ctx when client quits

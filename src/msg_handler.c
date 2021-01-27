@@ -124,6 +124,7 @@ cmd_t parse_msg(char *msg_buffer)
     /* Parse command from message buffer into command struct */
     char *token;
     char *rest = msg_buffer;
+    printf("msg: %s", msg_buffer);
 
     cmd_t parsed_msg;
     parsed_msg.num_params = 0;
@@ -131,7 +132,7 @@ cmd_t parse_msg(char *msg_buffer)
 
     /* Flag to indicate a param that takes up the rest of the message */
     bool param_is_rest = false;
-    while ((token = strtok_r(rest, " \t\r\n", &rest)))
+    while ((token = strtok_r(rest, " \t\r\n", &rest)) != NULL)
     {
         if (counter == 0)
         {
@@ -145,29 +146,35 @@ cmd_t parse_msg(char *msg_buffer)
             if (!param_is_rest)
             {
                 /* Param does not take up the rest of the message */ 
-                size_t token_size = sizeof(char) * strlen(token);
-                parsed_msg.params[counter - 1] = malloc(token_size);
+                // size_t token_size = sizeof(char) * strlen(token);
+                parsed_msg.params[counter - 1] = malloc(sizeof(char) * MAX_STR_LEN);
                 if (token[0] == ':')
+                {
                     /* Param takes up the rest of the messsage */
                     param_is_rest = true;
-                token = strtok(token, ":");
+                    char *token_rest = token;
+                    token = strtok_r(token_rest, " :\t\r\n", &token_rest);
+                }
                 strcpy(parsed_msg.params[counter - 1], token);
-                printf ("token 1 is %s", token);
+                printf("token 1 is %s with length %ld\n", token, strlen(token));
             }
             else
             {
                 /* Param takes up rest of message */
                 /* Accumulate the rest of param into params[counter - 1] */
+                printf("BREAK 1\n");
                 char *param_so_far = parsed_msg.params[counter - 1];
                 int concat_param_len = strlen(param_so_far) 
                                         + strlen(token) + 1;
                 char *concat_param = malloc(sizeof(char) * concat_param_len);
                 concat_param = strcat(strcat(param_so_far, " "), token);
                 free(parsed_msg.params[counter - 1]);
-                size_t new_param_size = sizeof(char) * concat_param_len;
-                parsed_msg.params[counter - 1] = malloc(new_param_size);
+                // size_t new_param_size = sizeof(char) * concat_param_len;
+                printf("BREAK 2\n");
+                parsed_msg.params[counter - 1] = malloc(sizeof(char) * MAX_STR_LEN);
+                printf("BREAK 3\n");
                 strcpy(parsed_msg.params[counter - 1], concat_param);
-                printf ("token 2 is %s", token);
+                printf ("token 2 is %s\n", token);
             }
         }
 
