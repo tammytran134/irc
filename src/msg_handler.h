@@ -37,11 +37,5 @@ msg_t recv_msg(char *buf, msg_t rmsg, server_ctx_t *ctx,
  */
 cmd_t parse_msg(char *buffer);
 
-/* This function executes commands sent by client;
- * specifically, it checks conditions and returns
- * the reply welcome when user correctly registers in the server
- */
-void exec_msg(server_ctx_t *ctx,
-              cmd_t msg, connection_info_t *connection);
 
 #endif

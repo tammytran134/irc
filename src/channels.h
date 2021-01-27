@@ -17,10 +17,13 @@ typedef struct channel_client
 /* Add client to channel */
 void add_channel_client(char *hostname, channel_client_t **clients,
                         bool is_oper);
+
 /* Remove client from channel */
 void remove_channel_client(char *hostname, channel_client_t **clients);
+
 /* Check if channel contains client */
 bool contains_client(char *hostname, channel_client_t **clients);
+
 /* Get client's information in channel */
 channel_client_t* get_channel_client(char *hostname, 
                                     channel_client_t **clients);

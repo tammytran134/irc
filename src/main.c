@@ -193,23 +193,6 @@ int main(int argc, char *argv[])
     }
 
     /* Your code goes here */
-    
-    /* Initialize hashtable of clients' information */
-    // client_info_t *clients_hashtable = calloc(1, sizeof(client_info_t));
-    // pthread_mutex_init(&clients_hashtable->lock, NULL);
-    /* Initialize hashtable of nicks' informatzion */
-    // nick_hb_t *nicks_hashtable = calloc(1, sizeof(nick_hb_t));
-    // pthread_mutex_init(&nicks_hashtable->lock, NULL);
-    /* Initialize hashtable of channels' information */
-    // channel_hb_t *channels_hashtable = calloc(1, sizeof(channel_hb_t));
-    // pthread_mutex_init(&channels_hashtable->lock, NULL);
-    // channel_client_t *channel_clients = NULL;
-    // channels_hashtable->channel_clients = channel_clients;
-    /* Initialize hashtable of irc operators' information */
-    // irc_operator_t *irc_operators_hashtable = calloc(1, sizeof(irc_operator_t));
-    // irc_oper_t *irc_oper = NULL;
-    // pthread_mutex_init(&irc_operators_hashtable->lock, NULL);
-    // irc_operators_hashtable->irc_oper = irc_oper;
 
     /* Initialize context object */
     server_ctx_t *ctx = calloc(1, sizeof(server_ctx_t));
@@ -333,7 +316,7 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
-    close(server_socket);
+    server_close_socket(ctx, server_socket);
     /* ADDED: Destroy the lock */
     pthread_mutex_destroy(&ctx->nicks_lock);
     pthread_mutex_destroy(&ctx->channels_lock);
