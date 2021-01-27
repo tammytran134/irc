@@ -54,6 +54,28 @@ bool check_cmd(int input, int standard, char *operator)
             return false;
         }
     }
+    else if (sameStr(operator, ">"))
+    {
+        if (input > standard)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else if (sameStr(operator, "<"))
+    {
+        if (input < standard)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
     else
     {
         return false;
@@ -370,15 +392,17 @@ int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     client_info_t *client = get_client_info(connection->client_socket,
                                             &ctx->clients_hashtable);
-    if (cmd.params[0] == NULL)
+    if (cmd.num_params == PRIVMSG_PAM_NO_RECIPIENT)
     {
         // ERR_NORECIPIENT
+        printf ("it goes here1\n");
         reply_error(cmd.command, ERR_NORECIPIENT, connection, client);
         return 0;
     }
-    if (cmd.params[1] == NULL)
+    if (cmd.num_params == PRIVMSG_PAM_NO_TEXT)
     {
         // ERR_NOTEXTTOSEND
+        printf ("it goes here2\n");
         reply_error(cmd.command, ERR_NOTEXTTOSEND, connection, client);
         return 0;
     }
@@ -400,16 +424,18 @@ int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             }
             else
             {   
+                printf ("it goes here3\n");
+                //print_cmd(cmd);
                 // if channel is found and client is in it
                 if (contains_client(client->info.nick, 
                                     &channel->channel_clients))
                 {
                     // relay message to all members of channel
                     char relay_msg[MAX_STR_LEN];
-                    sprintf(relay_msg, ":%s!%s@%s QUIT :%s", 
+                    sprintf(relay_msg, ":%s!%s@%s PRIVMSG %s :%s\r\n", 
                             client->info.nick,
                             client->info.username, 
-                            connection->client_hostname, cmd.params[1]);
+                            connection->client_hostname, cmd.params[0], cmd.params[1]);
                     server_send_chan_client(channel->channel_clients, 
                                             relay_msg, ctx);
                     return 0;
@@ -436,8 +462,12 @@ int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             }
             else
             {
+                printf ("it goes here4\n");
+                //print_cmd(cmd);
                 // send message to target client
-                relay_reply(cmd.params[1], connection, client, receiver);
+                char server_msg[MAX_STR_LEN];
+                sprintf (server_msg, "PRIVMSG %s :%s", cmd.params[0], cmd.params[1]);
+                relay_reply(server_msg, connection, client, receiver);
                 return 0;
             }
         }
@@ -453,11 +483,11 @@ int handler_NOTICE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
      */
     client_info_t *client = get_client_info(connection->client_socket,
                                             &ctx->clients_hashtable);
-    if (cmd.params[0] == NULL)
+    if (cmd.num_params == PRIVMSG_PAM_NO_RECIPIENT)
     {
         return 0;
     }
-    if (cmd.params[1] == NULL)
+    if (cmd.num_params == PRIVMSG_PAM_NO_TEXT)
     {
         return 0;
     }
@@ -481,10 +511,10 @@ int handler_NOTICE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                                     &channel->channel_clients))
                 {
                     char relay_msg[MAX_STR_LEN];
-                    sprintf(relay_msg, ":%s!%s@%s QUIT :%s", client->info.nick,
-                                                client->info.username, 
-                                                connection->client_hostname, 
-                                                cmd.params[1]);
+                    sprintf(relay_msg, ":%s!%s@%s NOTICE %s :%s\r\n", 
+                            client->info.nick,
+                            client->info.username, 
+                            connection->client_hostname, cmd.params[0], cmd.params[1]);
                     server_send_chan_client(channel->channel_clients, 
                                             relay_msg, ctx);
                     return 0;
@@ -506,7 +536,9 @@ int handler_NOTICE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             }
             else
             {
-                relay_reply(cmd.params[1], connection, client, receiver);
+                char server_msg[MAX_STR_LEN];
+                sprintf (server_msg, "NOTICE %s :%s", cmd.params[0], cmd.params[1]);
+                relay_reply(server_msg, connection, client, receiver);
                 return 0;
             }
         }

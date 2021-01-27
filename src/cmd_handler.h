@@ -14,6 +14,8 @@
 #define OPER_PAM 2
 #define PART_PAM 1
 #define WHOIS_PAM 1
+#define PRIVMSG_PAM_NO_RECIPIENT 0
+#define PRIVMSG_PAM_NO_TEXT 1
 
 #define NUM_SERVERS 1
 #define NUM_SERVICES 0
