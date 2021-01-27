@@ -287,7 +287,7 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
      */
     client_info_t *curr_client = get_client_info(connection->client_hostname,
                                                  &ctx->clients_hashtable);
-    if (!(check_cmd(cmd.num_params, JOIN_PAM, "==")))
+    if (cmd.num_params < JOIN_PAM)
     {
         reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection, curr_client);
         return 0;
@@ -295,24 +295,24 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     else
     {
         char *channel_name = cmd.params[0];
-        channel_hb_t *channels = ctx->channels_hashtable;
-        channel_hb_t *channel = get_channel_info(channel_name, &channels);
+        channel_hb_t *channel = get_channel_info(channel_name, &ctx->channels_hashtable);
         if (channel == NULL)
         {
             /* Create channel with first user */
             server_add_channel(ctx, channel_name);
+            channel = get_channel_info(channel_name, &ctx->channels_hashtable);
         }
         /* Add client to channel */
         server_add_chan_client(channel, connection->client_hostname,
                                channel == NULL);
-
+        printf("B4\n");
         /* Channel data after operation */
-        channel = get_channel_info(channel_name, &channels);
+        channel = get_channel_info(channel_name, &ctx->channels_hashtable);
         channel_client_t *chan_clients = channel->channel_clients;
-
+        printf("B5\n");
         /* Send notification to other members of channel */
         char msg[MAX_LEN_STR];
-        sprintf(msg, ":%s!%s@%s JOIN #%s",
+        sprintf(msg, ":%s!%s@%s JOIN %s\n",
                 curr_client->info.nick,
                 curr_client->info.username,
                 curr_client->hostname,
@@ -327,7 +327,7 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
         int i = 0;
         char *hostname;
-        sprintf(single_msg, " = #%s ", channel_name);
+        sprintf(single_msg, "= %s ", channel_name);
         strcat(reply_msg, single_msg);
         for (chan_client = chan_clients; chan_client != NULL;
              chan_client = chan_client->hh.next)
@@ -718,6 +718,18 @@ int handler_WHOIS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     }
 }
 
+void print_cmd(cmd_t full_cmd)
+{
+    /* DEBUG tool */
+    printf("command: %s\n", full_cmd.command);
+    printf("num of params: %d\n", full_cmd.num_params);
+    for(int i = 0; i < full_cmd.num_params; i++)
+    {
+        printf("param[%d]: %s\n", i, full_cmd.params[i]);
+    }
+    return;
+}
+
 void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     printf("in exec cmd\n");
@@ -740,21 +752,34 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
     int num_handlers = sizeof(handlers) / sizeof(handler_entry_t);
     char *cmd = full_cmd.command;
     int i;
+    printf("BEFORE 1?\n");
     client_info_t *client = get_client_info(connection->client_hostname,
                                             &ctx->clients_hashtable);
+    if(client == NULL) {
+        printf("Shit client is null...\n");
+    }
+    printf("BEFORE 2\n");
     bool registered = ((client->info.nick != NULL) && (client->info.username != NULL));
+    printf("AFTER 1\n");
     for (i = 0; i < num_handlers; i++)
     {
+        printf("ERROR 1\n");
         if (sameStr(cmd, handlers[i].name))
         {
+            printf("ERROR 2\n");
             if ((registered) || (sameStr(cmd, "NICK")) || (sameStr(cmd, "USER")))
             {
+                printf("ERROR 2a\n");
+                print_cmd(full_cmd);
                 handlers[i].func(full_cmd, connection, ctx);
+                printf("ERROR 2b\n");
                 break;
             }
             else
             {
+                printf("ERROR 3\n");
                 reply_error(cmd, ERR_NOTREGISTERED, connection, client);
+                printf("ERROR 3a\n");
                 break;
             }
         }

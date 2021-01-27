@@ -50,6 +50,9 @@ int handler_WHOIS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx);
 
 void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx);
 
+/* DEBUG tool */
+void print_cmd(cmd_t full_cmd);
+
 typedef struct handler_entry
 {
     char *name;
