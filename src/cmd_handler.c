@@ -56,56 +56,51 @@ bool check_cmd(int input, int standard, char *operator)
 
 int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
-    printf("it comes to NICK\n");
     client_info_t *clients = ctx->clients_hashtable;
-    client_info_t *current_client = get_client_info(connection->client_hostname, &clients);
+    client_info_t *curr_client = get_client_info(connection->client_hostname,
+                                                 &clients);
     if (!(check_cmd(cmd.num_params, NICK_PAM, "==")))
     {
-        reply_error(cmd.command, ERR_NONICKNAMEGIVEN, connection, current_client);
+        reply_error(cmd.command, ERR_NONICKNAMEGIVEN, connection, curr_client);
         return 0;
     }
     else
     {
-        client_info_t *current_client;
         nick_hb_t *nicks = ctx->nicks_hashtable;
         char *nickname = cmd.params[0];
         client_info_t *client = get_client_w_nick(nickname, &clients, &nicks);
-        //if nickname is already in hash table nick
         if (client != NULL)
         {
             /* Nick is already in use no matter who the client is */
-            reply_error(nickname, ERR_NICKNAMEINUSE, connection, current_client);
+            reply_error(nickname, ERR_NICKNAMEINUSE, connection, curr_client);
             return 0;
         }
         else
         {
-            //client = get_client_info(connection->client_hostname, &clients);
-            if (current_client->info.nick != NULL)
+            if (curr_client != NULL && curr_client->info.nick != NULL)
             {
                 /* Client has entered NICK before */
-                free(current_client->info.nick);
                 /* Update nick in client's entry in clients hash table */
-                current_client->info.nick = malloc(sizeof(char) * strlen(nickname));
-                strcpy(current_client->info.nick, nickname);
+                curr_client->info.nick = malloc(sizeof(char) * strlen(nickname));
+                strcpy(curr_client->info.nick, nickname);
                 /* Update nick in nicks hashtable */
                 server_remove_nick(ctx, nickname);
-                server_add_nick(ctx, nickname, current_client->hostname);
+                server_add_nick(ctx, nickname, curr_client->hostname);
             }
             else
             {
                 /* Client has not entered NICK */
-                current_client->info.nick = malloc(sizeof(char) * strlen(nickname));
-                strcpy(current_client->info.nick, nickname);
-
+                curr_client->info.nick = malloc(sizeof(char) * strlen(nickname));
+                strcpy(curr_client->info.nick, nickname);
                 /* Add client's nick to server's nicks hash table */
                 server_add_nick(ctx, nickname, connection->client_hostname);
-                if (current_client->info.username != NULL)
+                if (curr_client->info.username != NULL)
                 {
                     /* If client has entered USER */
                     connection->registered = true;
                     change_connection(ctx, UNKNOWN, DECR);
                     change_connection(ctx, KNOWN, INCR);
-                    reply_welcome(current_client->info, connection, current_client);
+                    reply_welcome(curr_client->info, connection, curr_client);
                 }
                 else
                 {
@@ -523,7 +518,7 @@ int handler_OPER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     }
     else
     {
-        server_add_irc_operator(ctx->irc_operators_hashtable, cmd.params[0], OPERATOR_MODE);
+        server_add_irc_operator(ctx, cmd.params[0], OPERATOR_MODE);
         client->info.is_irc_operator = true;
         server_reply(":You are now an IRC operator", RPL_YOUREOPER, connection, client);
     }
@@ -588,6 +583,7 @@ int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
 void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
+    printf("in exec cmd\n");
     handler_entry_t handlers[] = {
         {"NICK", handler_NICK},
         {"USER", handler_USER},
@@ -605,10 +601,8 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
     int num_handlers = sizeof(handlers) / sizeof(handler_entry_t);
     char *cmd = full_cmd.command;
     int i;
-    printf ("it comes to exec_cmd\n");
     client_info_t *client = get_client_info(connection->client_hostname,
                                             &ctx->clients_hashtable);
-    printf ("it bet it doesn't go here\n");
     for (i = 0; i < num_handlers; i++)
     {
         if (sameStr(cmd, handlers[i].name))

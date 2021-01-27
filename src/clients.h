@@ -42,7 +42,7 @@ client_info_t *get_client_info(char *hostname, client_info_t **clients);
  */
 typedef struct nick_hb
 {
-    pthread_mutex_t lock;
+    // pthread_mutex_t lock;
     char *nick;     /* key */
     char *hostname; /* value (key for client_info_t) */
     UT_hash_handle hh;

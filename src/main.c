@@ -59,7 +59,6 @@
 #include "clients.h"
 
 void *service_single_client(void *args) {
-    printf ("it comes to service_single_client\n");
     worker_args_t *wa;
     server_ctx_t *ctx;
     int client_socket;
@@ -74,6 +73,16 @@ void *service_single_client(void *args) {
     client_socket = wa->socket;
     client_hostname = wa->client_hostname;
     ctx = wa->ctx;
+
+    /* Add an unknown client to server's client hash table */
+    client_info_t *connected_client = malloc(sizeof(client_info_t));
+    connected_client->client_socket = client_socket;
+    connected_client->hostname = client_hostname;
+    connected_client->info.is_irc_operator = false;
+    connected_client->info.nick = NULL;
+    connected_client->info.username = NULL;
+    connected_client->info.realname = NULL;
+    server_add_client(ctx, connected_client);
 
     pthread_detach(pthread_self());
     while ((numbytes = recv(client_socket, buf, sizeof buf, 0)) != -1)
@@ -90,6 +99,7 @@ void *service_single_client(void *args) {
         connection->client_hostname = client_hostname;
         connection->registered = false;
         rmsg = recv_msg(buf, rmsg, ctx, connection);
+        printf("gets here tho\n");
     }
     /* if client's connection is unknown, change the 
      * unknown_connection field in ctx when client quits
@@ -185,32 +195,36 @@ int main(int argc, char *argv[])
     /* Your code goes here */
     
     /* Initialize hashtable of clients' information */
-    client_info_t *clients_hashtable = calloc(1, sizeof(client_info_t));
-    pthread_mutex_init(&clients_hashtable->lock, NULL);
-    /* Initialize hashtable of nicks' information */
-    nick_hb_t *nicks_hashtable = calloc(1, sizeof(nick_hb_t));
-    pthread_mutex_init(&nicks_hashtable->lock, NULL);
+    // client_info_t *clients_hashtable = calloc(1, sizeof(client_info_t));
+    // pthread_mutex_init(&clients_hashtable->lock, NULL);
+    /* Initialize hashtable of nicks' informatzion */
+    // nick_hb_t *nicks_hashtable = calloc(1, sizeof(nick_hb_t));
+    // pthread_mutex_init(&nicks_hashtable->lock, NULL);
     /* Initialize hashtable of channels' information */
-    channel_hb_t *channels_hashtable = calloc(1, sizeof(channel_hb_t));
-    pthread_mutex_init(&channels_hashtable->lock, NULL);
-    channel_client_t *channel_clients = NULL;
-    channels_hashtable->channel_clients = channel_clients;
+    // channel_hb_t *channels_hashtable = calloc(1, sizeof(channel_hb_t));
+    // pthread_mutex_init(&channels_hashtable->lock, NULL);
+    // channel_client_t *channel_clients = NULL;
+    // channels_hashtable->channel_clients = channel_clients;
     /* Initialize hashtable of irc operators' information */
-    irc_operator_t *irc_operators_hashtable = calloc(1, sizeof(irc_operator_t));
-    irc_oper_t *irc_oper = NULL;
-    pthread_mutex_init(&irc_operators_hashtable->lock, NULL);
-    irc_operators_hashtable->irc_oper = irc_oper;
+    // irc_operator_t *irc_operators_hashtable = calloc(1, sizeof(irc_operator_t));
+    // irc_oper_t *irc_oper = NULL;
+    // pthread_mutex_init(&irc_operators_hashtable->lock, NULL);
+    // irc_operators_hashtable->irc_oper = irc_oper;
 
     /* Initialize context object */
     server_ctx_t *ctx = calloc(1, sizeof(server_ctx_t));
     ctx->num_connections = 0;
     ctx->num_unknown_connections = 0;
-    ctx->clients_hashtable = clients_hashtable;
-    ctx->nicks_hashtable = nicks_hashtable;
-    ctx->channels_hashtable = channels_hashtable;
-    ctx->irc_operators_hashtable = irc_operators_hashtable;
+    ctx->clients_hashtable = NULL;
+    ctx->nicks_hashtable = NULL;
+    ctx->channels_hashtable = NULL;
+    ctx->irc_operators_hashtable = NULL;
     ctx->password = passwd;
     pthread_mutex_init(&ctx->lock, NULL);
+    pthread_mutex_init(&ctx->channels_lock, NULL);
+    pthread_mutex_init(&ctx->clients_lock, NULL);
+    pthread_mutex_init(&ctx->nicks_lock, NULL);
+    pthread_mutex_init(&ctx->operators_lock, NULL);
 
     sigset_t new;
     sigemptyset (&new);
@@ -296,13 +310,12 @@ int main(int argc, char *argv[])
         /* Get client's hostname */
         char client_hostname[MAX_STR_LEN];
         char port[MAX_STR_LEN];
-        int result = getnameinfo((struct sockaddr *) &client_addr,//check
+        int result = getnameinfo((struct sockaddr *) client_addr,
                                     sin_size, 
                                     client_hostname,
                                     sizeof client_hostname,
                                     port,
                                     sizeof port, 0);
-
         wa = calloc(1, sizeof(worker_args_t));
         wa->socket = client_socket;
         wa->client_hostname = client_hostname;
@@ -320,10 +333,10 @@ int main(int argc, char *argv[])
     }
     close(server_socket);
     /* ADDED: Destroy the lock */
-    pthread_mutex_destroy(&ctx->nicks_hashtable->lock);
-    pthread_mutex_destroy(&ctx->channels_hashtable->lock);
-    pthread_mutex_destroy(&ctx->clients_hashtable->lock);
-    pthread_mutex_destroy(&ctx->irc_operators_hashtable->lock);
+    pthread_mutex_destroy(&ctx->nicks_lock);
+    pthread_mutex_destroy(&ctx->channels_lock);
+    pthread_mutex_destroy(&ctx->clients_lock);
+    pthread_mutex_destroy(&ctx->operators_lock);
     pthread_mutex_destroy(&ctx->lock);
     free(ctx);
 

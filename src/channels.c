@@ -52,6 +52,7 @@ void add_channel(char *name, channel_hb_t **channels)
         channel->channel_clients = NULL;
         channel->channel_name = malloc(sizeof(char) * strlen(name));
         strcpy(channel->channel_name, name);
+        pthread_mutex_init(&channel->lock, NULL);
         HASH_ADD_STR(*channels, channel_name, channel);
     }
 }
@@ -63,6 +64,7 @@ void remove_channel(char *channel_name, channel_hb_t **channels)
     HASH_FIND_STR(*channels, channel_name, channel);
     if (channel != NULL)
     {
+        pthread_mutex_destroy(&channel->lock);
         HASH_DELETE(hh, *channels, channel);
     }
 }

@@ -27,7 +27,7 @@ typedef struct irc_operator
 {
     int num_oper;
     irc_oper_t *irc_oper;
-    pthread_mutex_t lock;
+    // pthread_mutex_t lock;
 } irc_operator_t;
 
 /* A "server context" struct that contains information that 
@@ -43,6 +43,10 @@ typedef struct server_ctx
     irc_operator_t *irc_operators_hashtable;
     char *password;
     pthread_mutex_t lock;
+    pthread_mutex_t channels_lock;
+    pthread_mutex_t clients_lock;
+    pthread_mutex_t nicks_lock;
+    pthread_mutex_t operators_lock;
 } server_ctx_t;
 
 typedef struct worker_args
@@ -96,7 +100,6 @@ void send_final(client_info_t *receiver, char *msg);
 
 bool add_irc_operator(irc_oper_t **irc_opers, char *hostname, char *mode);
 
-void server_add_irc_operator(irc_operator_t *irc_operators, char *hostname,
-                             char *mode);
+void server_add_irc_operator(server_ctx_t *ctx, char *hostname, char *mode);
 
 #endif

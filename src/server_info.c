@@ -59,33 +59,33 @@ void change_connection(server_ctx_t *ctx, int mode, int operator)
 void server_add_client(server_ctx_t *ctx, client_info_t *client)
 {
     /* Add client to server context object's clients hash table */
-    pthread_mutex_lock(&ctx->clients_hashtable->lock);
+    pthread_mutex_lock(&ctx->clients_lock);
     add_client(client, &ctx->clients_hashtable);
-    pthread_mutex_unlock(&ctx->clients_hashtable->lock);
+    pthread_mutex_unlock(&ctx->clients_lock);
 }
 
 void server_remove_client(server_ctx_t *ctx, char *hostname)
 {
     /* Remove client from server context object's clients hash table */
-    pthread_mutex_lock(&ctx->clients_hashtable->lock);
+    pthread_mutex_lock(&ctx->clients_lock);
     remove_client(hostname, &ctx->clients_hashtable);
-    pthread_mutex_unlock(&ctx->clients_hashtable->lock);
+    pthread_mutex_unlock(&ctx->clients_lock);
 }
 
 void server_add_nick(server_ctx_t *ctx, char *nick, char *hostname)
 {
     /* Add nick to server context object's nicks hash table */
-    pthread_mutex_lock(&ctx->nicks_hashtable->lock);
+    pthread_mutex_lock(&ctx->nicks_lock);
     add_nick(nick, hostname, &ctx->nicks_hashtable);
-    pthread_mutex_unlock(&ctx->nicks_hashtable->lock);
+    pthread_mutex_unlock(&ctx->nicks_lock);
 }
 
 void server_remove_nick(server_ctx_t *ctx, char *nick)
 {
     /* Remove nick from server context object's nicks and hash table */
-    pthread_mutex_lock(&ctx->nicks_hashtable->lock);
+    pthread_mutex_lock(&ctx->nicks_lock);
     remove_nick(nick, &ctx->nicks_hashtable);
-    pthread_mutex_unlock(&ctx->nicks_hashtable->lock);
+    pthread_mutex_unlock(&ctx->nicks_lock);
 }
 
 void server_add_chan_client(channel_hb_t *channel, char *hostname, bool is_oper)
@@ -107,17 +107,17 @@ void server_remove_chan_client(channel_hb_t *channel, char *hostname)
 void server_add_channel(server_ctx_t *ctx, char *channel_name)
 {
     /* Add channel to server context object's channels hash table */
-    pthread_mutex_lock(&ctx->channels_hashtable->lock);
+    pthread_mutex_lock(&ctx->channels_lock);
     add_channel(channel_name, &ctx->channels_hashtable);
-    pthread_mutex_unlock(&ctx->channels_hashtable->lock);
+    pthread_mutex_unlock(&ctx->channels_lock);
 }
 
 void server_remove_channel(server_ctx_t *ctx, char *channel_name)
 {
     /* Remove channel from server context object's channels hash table */
-    pthread_mutex_lock(&ctx->channels_hashtable->lock);
+    pthread_mutex_lock(&ctx->channels_lock);
     remove_channel(channel_name, &ctx->channels_hashtable);
-    pthread_mutex_unlock(&ctx->channels_hashtable->lock);
+    pthread_mutex_unlock(&ctx->channels_lock);
 }
 
 void send_final(client_info_t *receiver, char *msg)
@@ -146,7 +146,8 @@ bool add_irc_operator(irc_oper_t **irc_opers, char *hostname, char *mode)
 {
     irc_oper_t *irc_oper;
     HASH_FIND_STR(*irc_opers, hostname, irc_oper);
-    if (irc_oper == NULL) {
+    if (irc_oper == NULL)
+    {
         irc_oper = malloc(sizeof(irc_oper_t));
         irc_oper->hostname = malloc(sizeof(char) * strlen(hostname));
         irc_oper->mode = malloc(sizeof(char) * strlen(mode));
@@ -155,19 +156,19 @@ bool add_irc_operator(irc_oper_t **irc_opers, char *hostname, char *mode)
         HASH_ADD_STR(*irc_opers, hostname, irc_oper);
         return true;
     }
-    else 
+    else
     {
         return false;
     }
-
 }
 
-void server_add_irc_operator(irc_operator_t *irc_operators, char *hostname, char *mode)
+void server_add_irc_operator(server_ctx_t *ctx, char *hostname, char *mode)
 {
-    pthread_mutex_lock(&irc_operators->lock);
-    if (add_irc_operator(&irc_operators->irc_oper, hostname, mode))
+    pthread_mutex_lock(&ctx->operators_lock);
+    if (add_irc_operator(&ctx->irc_operators_hashtable->irc_oper,
+                         hostname, mode))
     {
-        irc_operators->num_oper++;
+        ctx->irc_operators_hashtable->num_oper++;
     }
-    pthread_mutex_lock(&irc_operators->lock);
+    pthread_mutex_lock(&ctx->operators_lock);
 }

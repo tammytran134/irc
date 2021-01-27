@@ -36,6 +36,7 @@ void remove_nick(char *nick, nick_hb_t **nicks)
 void add_client(client_info_t *c, client_info_t **clients)
 {
     /* Add client to clients' hashtable */
+    pthread_mutex_init(&c->lock, NULL);
     HASH_ADD_STR(*clients, hostname, c);
 }
 
@@ -46,6 +47,7 @@ void remove_client(char *hostname, client_info_t **clients)
     HASH_FIND_STR(*clients, hostname, client);
     if (client != NULL)
     {
+        pthread_mutex_destroy(&client->lock);
         HASH_DELETE(hh, *clients, client);
     }
 }

@@ -200,7 +200,7 @@ cmd_t parse_msg(char *msg_buffer)
         }
     }
 
-    parsed_msg.num_params = counter;
+    parsed_msg.num_params = counter-1;
 
     return parsed_msg;
 }
