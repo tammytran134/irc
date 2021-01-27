@@ -62,4 +62,6 @@ bool has_entered_NICK(int client_socket, client_info_t **clients);
 
 bool has_entered_USER(int client_socket, client_info_t **clients);
 
+int count_users(client_info_t **clients);
+
 #endif

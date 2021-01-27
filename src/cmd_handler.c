@@ -88,12 +88,12 @@ int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     client_info_t *client = get_client_info(connection->client_socket,
                                             &ctx->clients_hashtable);
     //execute RPL_LUSERCLIENT
-    int num_of_clients = ctx->num_connections;
+    int num_of_users = count_users(&ctx->clients_hashtable);
     int num_of_services = NUM_SERVICES;
     int num_of_servers = NUM_SERVERS;
     char luserclient[MAX_LEN_STR];
     sprintf(luserclient, ":There are %d users and %d services on %d servers",
-            num_of_clients, num_of_services, num_of_servers);
+            num_of_users, num_of_services, num_of_servers);
     server_reply(luserclient, RPL_LUSERCLIENT, connection, client);
     //execute RPL_LUSEROP
     int num_of_operators = ctx->irc_operators_hashtable->num_oper;
@@ -395,6 +395,7 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 /* function to handler PRIVMSG command */
 int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
+    print_cmd(cmd);
     client_info_t *client = get_client_info(connection->client_socket,
                                             &ctx->clients_hashtable);
     if (cmd.num_params == PRIVMSG_PAM_NO_RECIPIENT)
@@ -621,7 +622,7 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     // List all channels
     if (cmd.num_params == 0)
     {
-        for (channel = channels; channel != NULL; channel = channels->hh.next)
+        for (channel = channels; channel != NULL; channel = channel->hh.next)
         {
             channel_name = channel->channel_name;
             num_channel_clients = count_channel_clients

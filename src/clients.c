@@ -88,3 +88,17 @@ bool has_entered_USER(int client_socket, client_info_t **clients)
     client_info_t *client = get_client_info(client_socket, clients);
     return client != NULL && client->info.username != NULL;
 }
+
+int count_users(client_info_t **clients)
+{
+    int num_of_users = 0;
+    client_info_t *client;
+    for (client = *clients; client != NULL; client = client->hh.next)
+    {
+        if ((client->info.nick != NULL) && (client->info.username != NULL))
+        {
+            num_of_users++;
+        }
+    }
+    return num_of_users;
+}

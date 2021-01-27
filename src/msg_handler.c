@@ -183,6 +183,9 @@ cmd_t parse_msg(char *msg_buffer)
     }
 
     parsed_msg.num_params = param_is_rest ? counter : counter-1;
-    printf ("Num of params is %d\n", parsed_msg.num_params);
+    //printf ("Num of params is %d\n", parsed_msg.num_params);
+    printf("parsed message debug\n");
+    print_cmd(parsed_msg);
+
     return parsed_msg;
 }
