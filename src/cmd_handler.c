@@ -305,6 +305,11 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             server_add_channel(ctx, channel_name);
             channel = get_channel_info(channel_name, &ctx->channels_hashtable);
         }
+        if (contains_client(connection->client_hostname, 
+                                    &channel->channel_clients)) 
+        {
+            return 0;
+        }
         /* Add client to channel */
         server_add_chan_client(channel, connection->client_hostname,
                                channel == NULL);
@@ -315,7 +320,7 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         printf("B5\n");
         /* Send notification to other members of channel */
         char msg[MAX_LEN_STR];
-        sprintf(msg, ":%s!%s@%s JOIN %s\n",
+        sprintf(msg, ":%s!%s@%s JOIN %s\r\n",
                 curr_client->info.nick,
                 curr_client->info.username,
                 curr_client->hostname,
