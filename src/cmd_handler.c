@@ -627,7 +627,7 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             channel_name = channel->channel_name;
             num_channel_clients = count_channel_clients
                                                 (&channel->channel_clients);
-            sprintf(single_msg, "%s # %d:\r\n", channel_name, 
+            sprintf(single_msg, "%s %d :", channel_name, 
                                                 num_channel_clients);
             strcat(reply_msg, single_msg);
         }
@@ -891,7 +891,6 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
             if ((registered) || (sameStr(cmd, "NICK")) || 
                                                         (sameStr(cmd, "USER")))
             {
-                printf("ERROR 2a\n");
                 print_cmd(full_cmd);
                 handlers[i].func(full_cmd, connection, ctx);
                 break;
@@ -901,7 +900,6 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
                 // If client hasn't completed registration,
                 // return ERR_NOTREGISTERED
                 reply_error(cmd, ERR_NOTREGISTERED, connection, client);
-                printf("ERROR 3a\n");
                 break;
             }
         }

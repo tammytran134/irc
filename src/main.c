@@ -64,10 +64,15 @@ void *service_single_client(void *args) {
     int client_socket;
     int numbytes;
     char buf[MAX_BUF_LEN];
-    char msg[MAX_MSG_LEN];
+    // char msg[MAX_MSG_LEN];
     char *client_hostname;
-    msg_t rmsg = {"", 0, false, false};
-    rmsg.msg = msg;
+    // msg_t rmsg = {"", 0, false, false};
+    // rmsg.msg = msg;
+    msg_t *rmsg = malloc(sizeof(msg_t));
+    rmsg->msg = malloc(sizeof(char) * MAX_MSG_LEN);
+    rmsg->counter = 0;
+    rmsg->nick_cmd = 0;
+    rmsg->user_cmd = 0;
 
     wa = (worker_args_t *) args;
     client_socket = wa->socket;
@@ -98,7 +103,7 @@ void *service_single_client(void *args) {
         connection->client_socket = client_socket;
         connection->server_hostname = server_hostname;
         connection->client_hostname = client_hostname;
-        rmsg = recv_msg(buf, rmsg, ctx, connection);
+        recv_msg(buf, rmsg, ctx, connection);
     }
     /* if client's connection is unknown, change the 
      * unknown_connection field in ctx when client quits
