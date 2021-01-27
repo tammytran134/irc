@@ -112,8 +112,12 @@
 void send_msg(char *msg, int client_socket);
 
 /* Error message */
-void reply_error(char *cmd, char *reply_code, connection_info_t *connection, client_info_t *client);
-void server_reply(char *msg, char *reply_code, connection_info_t *connection, client_info_t *client);
+void reply_error_mult(char *cmd1, char *cmd2, char *reply_code, 
+                connection_info_t *connection, client_info_t *client);
+void reply_error(char *cmd, char *reply_code, connection_info_t *connection, 
+                client_info_t *client);
+void server_reply(char *msg, char *reply_code, connection_info_t *connection, 
+                client_info_t *client);
 void relay_reply(char *msg, connection_info_t *connection, 
                 client_info_t *sender, client_info_t *receiver);
 

@@ -6,7 +6,8 @@
 
 #include "channels.h"
 
-void add_channel_client(char *hostname, channel_client_t **clients)
+void add_channel_client(char *hostname, channel_client_t **clients,
+                        bool is_oper)
 {
     /* Add client to channel */
     channel_client_t *client;
@@ -16,7 +17,8 @@ void add_channel_client(char *hostname, channel_client_t **clients)
         client = malloc(sizeof(channel_client_t));
         client->hostname = malloc(sizeof(char) * strlen(hostname));
         strcpy(client->hostname, hostname);
-        client->mode = NULL;
+        client->mode = malloc(sizeof(char) * 2);
+        strcpy(client->mode, is_oper ? "+o" : "-o");
         HASH_ADD_STR(*clients, hostname, client);
     }
 }
@@ -30,12 +32,22 @@ void remove_channel_client(char *hostname, channel_client_t **clients)
         HASH_DELETE(hh, *clients, client);
 }
 
+channel_client_t* get_channel_client(char *hostname, 
+                                    channel_client_t **clients)
+{
+    /* Get client's information in channel */
+    channel_client_t *client;
+    HASH_FIND_STR(*clients, hostname, client);
+    return client;
+}
+
 void add_channel(char *name, channel_hb_t **channels)
 {
     /* Add channel to server */
     channel_hb_t *channel;
     HASH_FIND_STR(*channels, name, channel);
-    if (channel == NULL) {
+    if (channel == NULL)
+    {
         channel = malloc(sizeof(channel_hb_t));
         channel->channel_clients = NULL;
         channel->channel_name = malloc(sizeof(char) * strlen(name));
@@ -63,7 +75,7 @@ bool contains_client(char *hostname, channel_client_t **clients)
     return result != NULL;
 }
 
-unsigned int count_channel_clients(channel_client_t **channel_clients) 
+unsigned int count_channel_clients(channel_client_t **channel_clients)
 {
     /* Return number of clients on a channel */
     return HASH_COUNT(*channel_clients);

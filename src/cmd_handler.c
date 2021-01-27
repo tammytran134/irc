@@ -221,13 +221,6 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection, curr_client);
         return 0;
     }
-    // else
-    // if channel exists
-    // reply RPL_NAMREPLY and RPL_ENDOFNAMES: list of users on channels
-    // relay message to all members of channel and user
-    // if doesnt create channel
-    // reply RPL_NAMREPLY and RPL_ENDOFNAMES
-    // relay message to all members of channel and user
     else
     {
         char *channel_name = cmd.params[0];
@@ -239,7 +232,8 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             server_add_channel(ctx, channel_name);
         }
         /* Add client to channel */
-        server_add_chan_client(channel, connection->client_hostname);
+        server_add_chan_client(channel, connection->client_hostname,
+                               channel == NULL);
 
         /* Channel data after operation */
         channel = get_channel_info(channel_name, &channels);
@@ -257,7 +251,6 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         /* Send RPL_NAMREPLY AND RPL_ENDOFNAMES to client */
         char reply_msg[MAX_LEN_STR];
         char single_msg[MAX_LEN_STR];
-        char nickname[MAX_LEN_STR];
         client_info_t *client;
         channel_client_t *chan_client;
 
@@ -270,14 +263,13 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         {
             hostname = chan_client->hostname;
             client = get_client_info(hostname, &ctx->clients_hashtable);
-            strcpy(nickname, client->info.nick);
             if (i == 0)
             {
-                sprintf(single_msg, ":@%s", nickname);
+                sprintf(single_msg, ":@%s", client->info.nick);
             }
             else
             {
-                sprintf(single_msg, " %s", nickname);
+                sprintf(single_msg, " %s", client->info.nick);
             }
             strcat(reply_msg, single_msg);
         }
@@ -450,18 +442,68 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
 int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
-    // if only channel is provided
-    // ERR_NOSUCHCHANNEL
+    char *chan_name = cmd.params[0];
+    char *mode = cmd.params[1];
+    char *nick = cmd.params[2];
+    char *hostname = connection->client_hostname;
 
-    // ERR_CHANOPRIVSNEEDED you are not operator
+    client_info_t *curr_client = get_client_info(connection->client_hostname,
+                                                 &ctx->clients_hashtable);
 
-    // if mode is unknown
-    // ERR_UNKNOWNMODE
+    channel_hb_t *channel = get_channel_info(chan_name,
+                                             &ctx->channels_hashtable);
+    if (channel == NULL)
+    {
+        /* ERR_NOSUCHCHANNEL */
+        reply_error(chan_name, ERR_NOSUCHCHANNEL, connection, curr_client);
+        return 0;
+    }
 
-    // user not in
-    // ERR_USERNOTINCHANNEL
-    // if successful
-    // relay back to all users
+    if (!sameStr(mode, "+o") && !sameStr(mode, "-o"))
+    {
+        /* UNKNOWNMODE */
+        reply_error_mult(mode, chan_name, ERR_UNKNOWNMODE,
+                         connection, curr_client);
+        return 0;
+    }
+
+    channel_client_t *chan_client = get_channel_client(hostname,
+                                                       &channel->channel_clients);
+    if (!sameStr(chan_client->mode, "+o"))
+    {
+        /* ERR_CHANOPRIVSNEEDED */
+        reply_error(chan_name, ERR_CHANOPRIVSNEEDED, connection, curr_client);
+        return 0;
+    }
+
+    client_info_t *target_client = get_client_w_nick(
+        nick,
+        &ctx->clients_hashtable,
+        &ctx->nicks_hashtable);
+    if (!contains_client(target_client->hostname, &channel->channel_clients))
+    {
+
+        /* ERR_USERNOTINCHANNEL */
+        reply_error_mult(nick, chan_name, ERR_USERNOTINCHANNEL,
+                         connection, curr_client);
+        return 0;
+    }
+
+    if (strlen(mode) == 2)
+    {
+        /* Update target nick's mode and notify channel */
+        strcpy(chan_client->mode, mode);
+        char relay_msg[MAX_STR_LEN];
+        sprintf(relay_msg, ":%s!%s@%s MODE #%s %s %s",
+                curr_client->info.nick,
+                curr_client->info.username,
+                curr_client->hostname,
+                chan_name,
+                mode,
+                nick);
+        server_send_chan_client(channel->channel_clients, relay_msg, ctx);
+    }
+
     return 0;
 }
 int handler_OPER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
