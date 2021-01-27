@@ -56,6 +56,7 @@ bool check_cmd(int input, int standard, char *operator)
 
 int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
+    printf("it comes to NICK\n");
     client_info_t *clients = ctx->clients_hashtable;
     client_info_t *current_client = get_client_info(connection->client_hostname, &clients);
     if (!(check_cmd(cmd.num_params, NICK_PAM, "==")))
@@ -604,8 +605,10 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
     int num_handlers = sizeof(handlers) / sizeof(handler_entry_t);
     char *cmd = full_cmd.command;
     int i;
+    printf ("it comes to exec_cmd\n");
     client_info_t *client = get_client_info(connection->client_hostname,
                                             &ctx->clients_hashtable);
+    printf ("it bet it doesn't go here\n");
     for (i = 0; i < num_handlers; i++)
     {
         if (sameStr(cmd, handlers[i].name))

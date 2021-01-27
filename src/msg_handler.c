@@ -43,6 +43,7 @@ msg_t recv_msg(
      * This message returns the updated msg_t struct back to the main function,
      * so that the msg_t state gets updated between each recv() call
      */
+    printf ("it comes to recv_msg\n");
     char c;
     for (int i = 0; i < strlen(buf); i++)
     {
@@ -75,7 +76,8 @@ msg_t recv_msg(
                 }
             }
             /* process it */
-            exec_msg(ctx, cmd, connection);
+            //exec_msg(ctx, cmd, connection);
+            exec_cmd(cmd, connection, ctx);
             /* renew the msg_t struct to wipe out the char *msg buffer
              * and renew the counter to hold new message
              * after current command has been sent away to be processed
@@ -116,7 +118,8 @@ msg_t recv_msg(
                             rmsg.user_cmd = true;
                         }
                     }
-                    exec_msg(ctx, cmd, connection);
+                    //exec_msg(ctx, cmd, connection);
+                    exec_cmd(cmd, connection, ctx);
                     /* renew the msg_t struct to wipe out the char *msg buffer
                      * and renew the counter to hold new message
                      * after current command has been sent away to be processed

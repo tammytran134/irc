@@ -59,6 +59,7 @@
 #include "clients.h"
 
 void *service_single_client(void *args) {
+    printf ("it comes to service_single_client\n");
     worker_args_t *wa;
     server_ctx_t *ctx;
     int client_socket;
@@ -184,16 +185,20 @@ int main(int argc, char *argv[])
     /* Your code goes here */
     
     /* Initialize hashtable of clients' information */
-    client_info_t *clients_hashtable = NULL;
+    client_info_t *clients_hashtable = calloc(1, sizeof(client_info_t));
+    pthread_mutex_init(&clients_hashtable->lock, NULL);
     /* Initialize hashtable of nicks' information */
-    nick_hb_t *nicks_hashtable = NULL;
+    nick_hb_t *nicks_hashtable = calloc(1, sizeof(nick_hb_t));
+    pthread_mutex_init(&nicks_hashtable->lock, NULL);
     /* Initialize hashtable of channels' information */
     channel_hb_t *channels_hashtable = calloc(1, sizeof(channel_hb_t));
+    pthread_mutex_init(&channels_hashtable->lock, NULL);
     channel_client_t *channel_clients = NULL;
     channels_hashtable->channel_clients = channel_clients;
     /* Initialize hashtable of irc operators' information */
     irc_operator_t *irc_operators_hashtable = calloc(1, sizeof(irc_operator_t));
     irc_oper_t *irc_oper = NULL;
+    pthread_mutex_init(&irc_operators_hashtable->lock, NULL);
     irc_operators_hashtable->irc_oper = irc_oper;
 
     /* Initialize context object */
@@ -205,7 +210,6 @@ int main(int argc, char *argv[])
     ctx->channels_hashtable = channels_hashtable;
     ctx->irc_operators_hashtable = irc_operators_hashtable;
     ctx->password = passwd;
-
     pthread_mutex_init(&ctx->lock, NULL);
 
     sigset_t new;
@@ -316,6 +320,10 @@ int main(int argc, char *argv[])
     }
     close(server_socket);
     /* ADDED: Destroy the lock */
+    pthread_mutex_destroy(&ctx->nicks_hashtable->lock);
+    pthread_mutex_destroy(&ctx->channels_hashtable->lock);
+    pthread_mutex_destroy(&ctx->clients_hashtable->lock);
+    pthread_mutex_destroy(&ctx->irc_operators_hashtable->lock);
     pthread_mutex_destroy(&ctx->lock);
     free(ctx);
 
