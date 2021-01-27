@@ -20,6 +20,9 @@
 #define NUM_SERVERS 1
 #define NUM_SERVICES 0
 
+#define OPER_ACTIVE "+o"
+#define OPER_INACTIVE "-o"
+
 /* This struct breaks down a complete command 
  * into command and parameters
  */

@@ -322,28 +322,30 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     {
         char *channel_name = cmd.params[0];
         channel_hb_t *channel = get_channel_info(channel_name, &ctx->channels_hashtable);
+        bool is_operator = false;
         if (channel == NULL)
         {
-            printf("handler_JOIN: channel == NULL\n");
+            is_operator = true;
+            //printf("handler_JOIN: channel == NULL\n");
             /* Create channel with first user */
             server_add_channel(ctx, channel_name);
             channel = get_channel_info(channel_name, &ctx->channels_hashtable);
         }
         if (contains_client(curr_client->info.nick, &channel->channel_clients)) 
         {
-            printf("handler_JOIN: already in channel...\n");
+            //printf("handler_JOIN: already in channel...\n");
             return 0;
         }
         /* Add client to channel */
-        printf("handler_JOIN: obtaining lock...\n");
+        //printf("handler_JOIN: obtaining lock...\n");
         server_add_chan_client(channel, curr_client->info.nick,
-                               channel == NULL);
+                               is_operator);
         // channel_client_t *c_client = get_channel_client(curr_client->info.nick, &channel->channel_clients);
         // if(c_client == NULL)
         // {
         //     printf("chan_client is NULL\n");
         // }
-        printf("handler_JOIN: released lock!\n");
+        //printf("handler_JOIN: released lock!\n");
         /* Channel data after operation */
         channel = get_channel_info(channel_name, &ctx->channels_hashtable);
         channel_client_t *chan_clients = channel->channel_clients;
@@ -354,19 +356,20 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                 curr_client->info.username,
                 curr_client->hostname,
                 channel_name);
-        printf("handler_JOIN: sending messages to channel clients...\n");
+        //printf("handler_JOIN: sending messages to channel clients...\n");
         server_send_chan_client(chan_clients, msg, ctx);
-        printf("handler_JOIN: sent messages to clients!\n");
+        //printf("handler_JOIN: sent messages to clients!\n");
         /* Send RPL_NAMREPLY AND RPL_ENDOFNAMES to client */
-        char reply_msg[MAX_LEN_STR];
+        char server_msg[MAX_LEN_STR];
         char single_msg[MAX_LEN_STR];
         client_info_t *client;
         channel_client_t *chan_client;
 
         int i = 0;
         char *nick;
-        sprintf(single_msg, "= %s ", channel_name);
-        strcat(reply_msg, single_msg);
+        // sprintf(single_msg, "= %s ", channel_name);
+        // strcpy(server_msg, single_msg);
+        sprintf(server_msg, "= %s ", channel_name);
         for (chan_client = chan_clients; chan_client != NULL;
              chan_client = chan_client->hh.next)
         {
@@ -382,12 +385,14 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             {
                 sprintf(single_msg, " %s", client->info.nick);
             }
-            strcat(reply_msg, single_msg);
+            strcat(server_msg, single_msg);
+            i++;
         }
-        server_reply(reply_msg, RPL_NAMREPLY, connection, curr_client);
-        sprintf(reply_msg, "%s :End of NAMES list", channel_name);
-        server_reply(reply_msg, RPL_ENDOFNAMES, connection, curr_client);
-        printf("END OF JOIN HANDLER\n");
+        server_reply(server_msg, RPL_NAMREPLY, connection, curr_client);
+        char end_msg[MAX_STR_LEN];
+        sprintf(end_msg, "%s :End of NAMES list", channel_name);
+        server_reply(end_msg, RPL_ENDOFNAMES, connection, curr_client);
+        //printf("END OF JOIN HANDLER\n");
     }
     return 0;
 }
@@ -592,7 +597,9 @@ int handler_PART(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             {
                 msg = cmd.params[1];
             }
-            sprintf(relay_msg, "PART %s :%s", channel_name, msg);
+            sprintf(relay_msg, ":%s!%s@%s PART %s :%s\r\n", client->info.nick, 
+                                            client->info.username, 
+                                            connection->client_hostname, channel_name, msg);
             // relay PART message to all members of the channel
             server_send_chan_client(channel->channel_clients, relay_msg, ctx);
             // remove client from the channel
@@ -612,7 +619,7 @@ int handler_PART(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     char reply_msg[MAX_LEN_STR];
-    char single_msg[MAX_LEN_STR];
+    char one_msg[MAX_LEN_STR];
     channel_hb_t *channels = ctx->channels_hashtable;
     channel_hb_t *channel = NULL;
     int num_channel_clients;
@@ -620,6 +627,8 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     client_info_t *client = get_client_info(connection->client_socket,
                                             &ctx->clients_hashtable);
     // List all channels
+    strcpy(reply_msg, "");
+    printf ("final message here is %s\n", reply_msg);
     if (cmd.num_params == 0)
     {
         for (channel = channels; channel != NULL; channel = channel->hh.next)
@@ -627,11 +636,13 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             channel_name = channel->channel_name;
             num_channel_clients = count_channel_clients
                                                 (&channel->channel_clients);
-            sprintf(single_msg, "%s %d :", channel_name, 
+            sprintf(one_msg, ":%s %s %s %s %d :\r\n", connection->server_hostname, 
+                                            RPL_LIST, client->info.nick, channel_name, 
                                                 num_channel_clients);
-            strcat(reply_msg, single_msg);
+            strcat(reply_msg, one_msg);
         }
-        server_reply(reply_msg, RPL_LIST, connection, client);
+        printf ("final message is %s\n", reply_msg);
+        send_final(client, reply_msg);
         server_reply(":End of LIST", RPL_LISTEND, connection, client);
     }
     else
@@ -641,8 +652,9 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         channel_hb_t *channel = get_channel_info(channel_name,
                                                  &ctx->channels_hashtable);
         num_channel_clients = count_channel_clients(&channel->channel_clients);
-        sprintf(single_msg, "%s # %d:\r\n", channel_name, num_channel_clients);
-        server_reply(reply_msg, RPL_LIST, connection, client);
+        char one_channel_msg[MAX_STR_LEN];
+        sprintf(one_channel_msg, "%s %d:", channel_name, num_channel_clients);
+        server_reply(one_channel_msg, RPL_LIST, connection, client);
         server_reply(":End of LIST", RPL_LISTEND, connection, client);
     }
     return 0;
@@ -651,16 +663,17 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 /* function to handler MODE command */
 int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
+    printf ("Beginning of MODE\n");
     char *chan_name = cmd.params[0];
     char *mode = cmd.params[1];
     char *nick = cmd.params[2];
     char *hostname = connection->client_hostname;
-
     client_info_t *curr_client = get_client_info(connection->client_socket,
                                                  &ctx->clients_hashtable);
-
+    printf ("Beginning of MODE1\n");
     channel_hb_t *channel = get_channel_info(chan_name,
                                              &ctx->channels_hashtable);
+    printf ("Beginning of MODE2\n");
     if (channel == NULL)
     {
         /* ERR_NOSUCHCHANNEL */
@@ -668,7 +681,7 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         return 0;
     }
 
-    if (!sameStr(mode, "+o") && !sameStr(mode, "-o"))
+    if ((!sameStr(mode, OPER_ACTIVE)) && (!sameStr(mode, OPER_INACTIVE)))
     {
         /* UNKNOWNMODE */
         reply_error_mult(mode, chan_name, ERR_UNKNOWNMODE,
@@ -676,9 +689,10 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         return 0;
     }
 
-    channel_client_t *chan_client = get_channel_client(hostname,
+    channel_client_t *chan_client = get_channel_client(curr_client->info.nick,
                                                     &channel->channel_clients);
-    if (!sameStr(chan_client->mode, "+o") && 
+    printf ("Beginning of MODE3\n");
+    if (!sameStr(chan_client->mode, OPER_ACTIVE) && 
                                         (!(curr_client->info.is_irc_operator)))
     {
         /* ERR_CHANOPRIVSNEEDED */
@@ -704,7 +718,7 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         /* Update target nick's mode and notify channel */
         strcpy(chan_client->mode, mode);
         char relay_msg[MAX_STR_LEN];
-        sprintf(relay_msg, ":%s!%s@%s MODE %s %s %s",
+        sprintf(relay_msg, ":%s!%s@%s MODE %s %s %s\r\n",
                 curr_client->info.nick,
                 curr_client->info.username,
                 curr_client->hostname,
