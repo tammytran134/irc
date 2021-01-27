@@ -231,27 +231,116 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
 int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
-
-    // if no name of recipient is identified
-    // send ERR_NOSUCHNICK
-    // if no text with prefix is sent
-    // send ERR_NOTEXTTOSEND
-    // if no name of recipient is input
-    // send ERR_NORECIPIENT
-
-    // user-to-user
-    // identify the recipient and his socket
-
-    // user to channel
-    // if send messages to channel they are not in: ERR_CANNOTSENDTOCHAN
-    // relay message to all users of channels
+    client_info_t *client = get_client_info(connection->client_hostname,
+                                            &ctx->clients_hashtable);
+    if (cmd.params[0] == NULL)
+    {
+        reply_error(cmd.command, ERR_NORECIPIENT, connection, client);
+        return 0;
+    }
+    if (cmd.params[1] == NULL)
+    {
+        reply_error(cmd.command, ERR_NOTEXTTOSEND, connection, client);
+        return 0;
+    }
+    else {
+        client_info_t *clients = ctx->clients_hashtable;
+        nick_hb_t *nicks = ctx->nicks_hashtable;
+        channel_hb_t *channels = ctx->channels_hashtable;
+        char *receiver_nick = cmd.params[0];
+        if (receiver_nick[0] == '#') {
+            // message to channel
+            channel_hb_t *channel = get_channel_info(receiver_nick, &channels);
+            if (channel == NULL)
+            {
+                reply_error(receiver_nick, ERR_NOSUCHNICK, connection, client);
+                return 0;
+            }
+            else 
+            {
+                if (contains_client(connection->client_hostname, &channel->channel_clients))
+                {
+                    server_send_chan_client(channel->channel_clients, cmd.params[1], ctx);
+                    return 0;
+                }
+                else 
+                {
+                    reply_error(receiver_nick, ERR_CANNOTSENDTOCHAN, connection, client);
+                    return 0;
+                }
+            }
+        }
+        else 
+        {
+            // message to individual
+            client_info_t *receiver = get_client_w_nick(receiver_nick, &clients, &nicks);
+            if (receiver == NULL)
+            {
+                reply_error(receiver_nick, ERR_NOSUCHNICK, connection, client);
+                return 0;
+            }
+            else 
+            {
+                relay_reply(cmd.params[1], connection, client, receiver);
+                return 0;
+            }
+        }
+    }
     return 0;
 }
 
 int handler_NOTICE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
-    // identify errors but don't reply
-    // send messages if success
+    client_info_t *client = get_client_info(connection->client_hostname,
+                                            &ctx->clients_hashtable);
+    if (cmd.params[0] == NULL)
+    {
+        return 0;
+    }
+    if (cmd.params[1] == NULL)
+    {
+        return 0;
+    }
+    else {
+        client_info_t *clients = ctx->clients_hashtable;
+        nick_hb_t *nicks = ctx->nicks_hashtable;
+        channel_hb_t *channels = ctx->channels_hashtable;
+        char *receiver_nick = cmd.params[0];
+        if (receiver_nick[0] == '#') {
+            // message to channel
+            channel_hb_t *channel = get_channel_info(receiver_nick, &channels);
+            if (channel == NULL)
+            {
+                return 0;
+            }
+            else 
+            {
+                if (contains_client(connection->client_hostname, &channel->channel_clients))
+                {
+                    server_send_chan_client(channel->channel_clients, cmd.params[1], ctx);
+                    return 0;
+                }
+                else 
+                {
+                    return 0;
+                }
+            }
+        }
+        else 
+        {
+            // message to individual
+            client_info_t *receiver = get_client_w_nick(receiver_nick, &clients, &nicks);
+            if (receiver == NULL)
+            {
+                return 0;
+            }
+            else 
+            {
+                relay_reply(cmd.params[1], connection, client, receiver);
+                return 0;
+            }
+        }
+    }
     return 0;
 }
 
@@ -309,7 +398,7 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 int handler_OPER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     client_info_t *client = get_client_info(connection->client_hostname,
-                            &ctx->clients_hashtable);
+                                            &ctx->clients_hashtable);
     if (!(check_cmd(cmd.num_params, OPER_PAM, "==")))
     {
         reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection, client);

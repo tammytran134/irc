@@ -42,6 +42,25 @@ void reply_error(char *cmd, char *reply_code, connection_info_t *connection, cli
     {
         server_reply(":Password incorrect", reply_code, connection, client);
     }
+    else if (strcmp(reply_code, ERR_NORECIPIENT) == 0)
+    {
+        sprintf (reply_msg, ":No recipient given (%s)", cmd);
+        server_reply(reply_msg, reply_code, connection, client);
+    }
+    else if (strcmp(reply_code, ERR_NOTEXTTOSEND) == 0)
+    {
+        server_reply(":No text to send", reply_code, connection, client);
+    }
+    else if (strcmp(reply_code, ERR_NOSUCHNICK) == 0)
+    {
+        sprintf (reply_msg, "<%s> :No such nick/channel", cmd);
+        server_reply(reply_msg, reply_code, connection, client);
+    }
+    else if (strcmp(reply_code, ERR_CANNOTSENDTOCHAN) == 0)
+    {
+        sprintf (reply_msg, "<%s> :Cannot send to channel", cmd);
+        server_reply(reply_msg, reply_code, connection, client);
+    }
     else {
         return;
     }
