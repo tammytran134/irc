@@ -480,10 +480,8 @@ int handler_OPER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     }
     else
     {
-        // TODO with thread:
-        // increment ctx->irc_operators_hashtable->num_oper++;
-        // add user's nick to ctx->irc_operators_hashtable->irc_oper;
-        // turn is_irc_operator field in client_info_t to true;
+        server_add_irc_operator(ctx->irc_operators_hashtable, cmd.params[0], OPERATOR_MODE);
+        client->info.is_irc_operator = true;
         server_reply(":You are now an IRC operator", RPL_YOUREOPER, connection, client);
     }
 
