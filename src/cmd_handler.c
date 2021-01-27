@@ -260,7 +260,10 @@ int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             {
                 if (contains_client(connection->client_hostname, &channel->channel_clients))
                 {
-                    server_send_chan_client(channel->channel_clients, cmd.params[1], ctx);
+                    char relay_msg[MAX_STR_LEN];
+                    sprintf(relay_msg, ":%s!%s@%s QUIT :%s", client->info.nick, 
+                    client->info.username, connection->client_hostname, cmd.params[1]);
+                    server_send_chan_client(channel->channel_clients, relay_msg, ctx);
                     return 0;
                 }
                 else 
@@ -317,7 +320,10 @@ int handler_NOTICE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             {
                 if (contains_client(connection->client_hostname, &channel->channel_clients))
                 {
-                    server_send_chan_client(channel->channel_clients, cmd.params[1], ctx);
+                    char relay_msg[MAX_STR_LEN];
+                    sprintf(relay_msg, ":%s!%s@%s QUIT :%s", client->info.nick, 
+                    client->info.username, connection->client_hostname, cmd.params[1]);
+                    server_send_chan_client(channel->channel_clients, relay_msg, ctx);
                     return 0;
                 }
                 else 
