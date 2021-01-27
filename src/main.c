@@ -91,6 +91,7 @@ void *service_single_client(void *args) {
         /* Get name of host server */
         char server_hostname[MAX_STR_LEN];
         gethostname(server_hostname, sizeof server_hostname);
+        connected_client->server_hostname = server_hostname;
         /* Send the data received from the buf 
          * to recv_msg to parse and process */
         connection_info_t *connection = calloc(1, sizeof(connection_info_t));

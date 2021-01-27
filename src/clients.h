@@ -23,6 +23,7 @@ typedef struct client_info
 {
     char *hostname; /* key for hashtable */
     int client_socket;
+    char *server_hostname;
     user_info_t info;  /* value for hashtable */
     UT_hash_handle hh; /* makes this struct hashable */
     pthread_mutex_t lock;

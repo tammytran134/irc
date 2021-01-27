@@ -345,7 +345,7 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             strcat(reply_msg, single_msg);
         }
         server_reply(reply_msg, RPL_NAMREPLY, connection, curr_client);
-        sprintf(reply_msg, "#%s :End of NAMES list", channel_name);
+        sprintf(reply_msg, "%s :End of NAMES list", channel_name);
         server_reply(reply_msg, RPL_ENDOFNAMES, connection, curr_client);
     }
     return 0;
@@ -612,7 +612,7 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         /* Update target nick's mode and notify channel */
         strcpy(chan_client->mode, mode);
         char relay_msg[MAX_STR_LEN];
-        sprintf(relay_msg, ":%s!%s@%s MODE #%s %s %s",
+        sprintf(relay_msg, ":%s!%s@%s MODE %s %s %s",
                 curr_client->info.nick,
                 curr_client->info.username,
                 curr_client->hostname,
@@ -664,6 +664,60 @@ int handler_PONG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     return 0;
 }
 
+int handler_WHOIS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx) 
+{
+    char *client_hostname = connection->client_hostname;
+    client_info_t *clients = ctx->clients_hashtable;
+    client_info_t *client = get_client_info(client_hostname, &clients);
+    if (!(check_cmd(cmd.num_params, WHOIS_PAM, ">=")))
+    {
+        return 0;
+    }
+    else {
+        nick_hb_t *nicks = ctx->nicks_hashtable;
+        char *nickname = cmd.params[0];
+        client_info_t *target_client = get_client_w_nick(nickname, &clients, &nicks);
+        if (target_client == NULL)
+        {
+            reply_error(nickname, ERR_NOSUCHNICK, connection, client);
+            return 0;
+        }
+        else {
+
+            /* RPL_WHOISUSER */
+            char whoisuser[MAX_LEN_STR];
+            sprintf(whoisuser, "%s %s %s * :%s", 
+                    target_client->info.nick, target_client->info.username, 
+                    target_client->server_hostname, target_client->info.realname);
+            server_reply(whoisuser, RPL_WHOISUSER, connection, client);
+            /* RPL_WHOISCHANNELS */
+
+            /* RPL_WHOISSERVER */
+            char whoisserver[MAX_LEN_STR];
+            sprintf(whoisserver, "%s %s :Project1b", 
+                    target_client->info.nick, target_client->server_hostname);
+            server_reply(whoisserver, RPL_WHOISSERVER, connection, client);
+            /* RPL_AWAY */
+            /* RPL_WHOISOPERATOR */
+            if (client->info.is_irc_operator)
+            {
+                if (target_client->info.is_irc_operator)
+                {
+                    char whoisoperator[MAX_LEN_STR];
+                    sprintf(whoisoperator, "%s :is an IRC operator", 
+                    target_client->info.nick);
+                    server_reply(whoisoperator, RPL_WHOISOPERATOR, connection, client);
+                }
+            }
+            /* RPL_ENDOFWHOIS */
+            char endofwhois[MAX_LEN_STR];
+            sprintf(endofwhois, "%s :End of WHOIS list", nickname);
+            server_reply(endofwhois, RPL_ENDOFWHOIS, connection, client);
+            return 0;
+        }
+    }
+}
+
 void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     printf("in exec cmd\n");
@@ -680,7 +734,8 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
         {"PING", handler_PING},
         {"PONG", handler_PONG},
         {"LUSERS", handler_LUSERS},
-        {"PART", handler_PART}
+        {"PART", handler_PART},
+        {"WHOIS", handler_WHOIS}
     };
     int num_handlers = sizeof(handlers) / sizeof(handler_entry_t);
     char *cmd = full_cmd.command;
