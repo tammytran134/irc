@@ -11,10 +11,11 @@
 #define NICK_PAM 1
 #define USER_PAM 4             
 #define JOIN_PAM 1 
-#define OPER_PAM 2  
+#define OPER_PAM 2
+#define PART_PAM 1
 
 #define NUM_SERVERS 1
-#define NUM_SERVICES 1
+#define NUM_SERVICES 0
 
 /* This struct breaks down a complete command 
  * into command and parameters
@@ -43,6 +44,7 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx);
 int handler_OPER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx);
 int handler_PONG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx);
 int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx);
+int handler_PART(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx);
 
 void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx);
 

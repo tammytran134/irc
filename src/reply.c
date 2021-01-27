@@ -72,6 +72,15 @@ void reply_error(char *cmd, char *reply_code,
         sprintf(reply_msg, "%s :You're not channel operator", cmd);
         server_reply(reply_msg, reply_code, connection, client);
     }
+    else if (strcmp(reply_code, ERR_NOTONCHANNEL) == 0)
+    {
+        sprintf(reply_msg, "%s :You're not on that channel", cmd);
+        server_reply(reply_msg, reply_code, connection, client);
+    }
+    else if (strcmp(reply_code, ERR_NOMOTD) == 0)
+    {
+        server_reply(":MOTD File is missing", reply_code, connection, client);
+    }
     else
     {
         return;

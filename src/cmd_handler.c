@@ -59,7 +59,9 @@ int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     client_info_t *client = get_client_info(connection->client_hostname,
                                             &ctx->clients_hashtable);
     //RPL_LUSERCLIENT, those who have put in both nick and user
+    printf ("it comes to LUSER\n");
     int num_of_clients = ctx->num_connections;
+    printf ("it passes to LUSER\n");
     int num_of_services = NUM_SERVICES;
     int num_of_servers = NUM_SERVERS;
     char luserclient[MAX_LEN_STR];
@@ -67,6 +69,7 @@ int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             num_of_clients, num_of_services, num_of_servers);
     server_reply(luserclient, RPL_LUSERCLIENT, connection, client);
     //RPL_LUSEROP
+    printf ("it comes to LUSEROP\n");
     int num_of_operators = ctx->irc_operators_hashtable->num_oper;
     char luserop[MAX_LEN_STR];
     sprintf(luserop, "%d :operator(s) online",
@@ -90,6 +93,7 @@ int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     sprintf(luserme, ":I have %d clients and %d servers",
             num_of_connections, NUM_SERVERS);
     server_reply(luserme, RPL_LUSERME, connection, client);
+    printf ("it comes all the way to lusers\n");
     return 0;
 }
 
@@ -118,6 +122,7 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         {
             if (curr_client != NULL && curr_client->info.nick != NULL)
             {
+                printf ("client has entered NICK before\n");
                 /* Client has entered NICK before */
                 /* Update nick in client's entry in clients hash table */
                 curr_client->info.nick = malloc(sizeof(char) * strlen(nickname));
@@ -129,22 +134,27 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             else
             {
                 /* Client has not entered NICK */
+                printf ("client has not entered NICK before\n");
                 curr_client->info.nick = malloc(sizeof(char) * strlen(nickname));
                 strcpy(curr_client->info.nick, nickname);
                 /* Add client's nick to server's nicks hash table */
                 server_add_nick(ctx, nickname, connection->client_hostname);
                 if (curr_client->info.username != NULL)
                 {
+                    printf ("client has entered user before\n");
                     /* If client has entered USER */
-                    change_connection(ctx, UNKNOWN, DECR);
-                    change_connection(ctx, KNOWN, INCR);
                     reply_welcome(curr_client->info, connection, curr_client);
                     handler_LUSERS(cmd, connection, ctx);
-                    send_final(client, ":hostname 422 user1 :MOTD File is missing\r\n");
+                    printf ("possible segfault1\n");
+                    reply_error(cmd.command, ERR_NOMOTD, connection, curr_client);
+                    //send_final(client, ":hostname 422 user1 :MOTD File is missing\r\n");
+                    printf ("possible segfault2\n");
+                    return 0;
                 }
                 else
                 {
                     /* Client has not entered USER */
+                    printf ("client has not entered user to we change connections\n");
                     change_connection(ctx, UNKNOWN, DECR);
                     change_connection(ctx, KNOWN, INCR);
                 }
@@ -180,21 +190,19 @@ int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             printf ("First time using USER\n");
             client->info.username = malloc(sizeof(char) * strlen(username));
             client->info.realname = malloc(sizeof(char) * strlen(realname));
+            strcpy(client->info.username, username);
+            strcpy(client->info.realname, realname);
             if (client->info.nick != NULL)
             {
-                strcpy(client->info.username, username);
-                strcpy(client->info.realname, realname);
+                /* Client has entered NICK */
                 reply_welcome(client->info, connection, client);
                 handler_LUSERS(cmd, connection, ctx);
-                send_final(client, ":hostname 422 user1 :MOTD File is missing\r\n");
-                /* Client has not been registered */
+                reply_error(cmd.command, ERR_NOMOTD, connection, client);
     
             }
             else
             {
                 // Client has not entered NICK
-                strcpy(client->info.username, username);
-                strcpy(client->info.realname, realname);
                 change_connection(ctx, UNKNOWN, DECR);
                 change_connection(ctx, KNOWN, INCR);
             }
@@ -468,6 +476,53 @@ int handler_NOTICE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     return 0;
 }
 
+int handler_PART(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
+{
+    client_info_t *client = get_client_info(connection->client_hostname,
+                                            &ctx->clients_hashtable);
+    if (!(check_cmd(cmd.num_params, PART_PAM, ">=")))
+    {
+        reply_error(cmd.command, ERR_NEEDMOREPARAMS, connection, client);
+        return 0;
+    }
+    else
+    {
+        char *channel_name = cmd.params[0];
+        channel_hb_t *channel = get_channel_info(channel_name,&ctx->channels_hashtable);
+        if (channel == NULL)
+        {
+            reply_error(channel_name, ERR_NOSUCHCHANNEL, connection, client);
+            return 0;
+        }
+        if (!(contains_client(connection->client_hostname, &channel->channel_clients)))
+        {
+            reply_error(channel_name, ERR_NOTONCHANNEL, connection, client);
+            return 0;
+        }
+        else 
+        {
+            char relay_msg[MAX_STR_LEN];
+            char *msg;
+            if (cmd.params[1] == NULL)
+            {
+                msg = client->info.nick;
+            }
+            else
+            {
+                msg = cmd.params[1];
+            }
+            sprintf(relay_msg, "PART %s :%s", channel_name, msg);
+            server_send_chan_client(channel->channel_clients, relay_msg, ctx);
+            server_remove_chan_client(channel, connection->client_hostname);
+            if (count_channel_clients(&channel->channel_clients) == 0)
+            {
+                server_remove_channel(ctx, channel_name);
+            }
+        }
+    }
+    return 0;
+}
+
 int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     char reply_msg[MAX_LEN_STR];
@@ -532,7 +587,7 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
     channel_client_t *chan_client = get_channel_client(hostname,
                                                        &channel->channel_clients);
-    if (!sameStr(chan_client->mode, "+o"))
+    if (!sameStr(chan_client->mode, "+o") && (!(curr_client->info.is_irc_operator)))
     {
         /* ERR_CHANOPRIVSNEEDED */
         reply_error(chan_name, ERR_CHANOPRIVSNEEDED, connection, curr_client);
@@ -625,6 +680,7 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
         {"PING", handler_PING},
         {"PONG", handler_PONG},
         {"LUSERS", handler_LUSERS},
+        {"PART", handler_PART}
     };
     int num_handlers = sizeof(handlers) / sizeof(handler_entry_t);
     char *cmd = full_cmd.command;

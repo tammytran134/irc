@@ -113,7 +113,7 @@ void *service_single_client(void *args) {
     {
         change_connection(ctx, UNKNOWN, DECR);
     }
-    close(client_socket);
+    server_close_socket(ctx, client_socket);
     pthread_exit(NULL);
 }
 
