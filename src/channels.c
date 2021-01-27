@@ -38,7 +38,7 @@ void add_channel(char *name, channel_hb_t **channels)
     /* Add channel to server */
     channel_hb_t *channel;
     HASH_FIND_STR(*channels, name, channel);
-    if (channel != NULL) {
+    if (channel == NULL) {
         channel = malloc(sizeof(channel_hb_t));
         channel->channel_clients = malloc(sizeof(channel_client_t));
         channel->channel_name = malloc(sizeof(char) * strlen(name));

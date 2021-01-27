@@ -14,6 +14,8 @@
 #define UNKNOWN 3
 #define KNOWN 4
 
+#define OPERATOR_MODE "+o"
+
 typedef struct irc_oper
 {
     char *hostname; /* key */
@@ -25,6 +27,7 @@ typedef struct irc_operator
 {
     int num_oper;
     irc_oper_t *irc_oper;
+    pthread_mutex_t lock;
 } irc_operator_t;
 
 /* A "server context" struct that contains information that 
@@ -60,21 +63,31 @@ typedef struct connection_info
 
 /* Update number of known or unknown connections in server context object */
 void change_connection(server_ctx_t *ctx, int mode, int operator);
+
 /* Add client to server context object's clients hash table */
 void server_add_client(server_ctx_t *ctx, client_info_t *client);
+
 /* Remove client from server context object's clients hash table */
 void server_remove_client(server_ctx_t *ctx, char *hostname);
+
 /* Add nick to server context object's nicks hash table */
 void server_add_nick(server_ctx_t *ctx, char *nick, char *hostname);
+
 /* Remove nick from sever context object's nicks and hash table */
 void server_remove_nick(server_ctx_t *ctx, char *nick);
+
 /* Add client to channel in server context object's channels hash table */
 void server_add_chan_client(channel_hb_t *channel, char *hostname,char *mode);
+
 /* Remove client from channel in server context object's channels hash table */
 void server_remove_chan_client(channel_hb_t *channel, char *hostname);
+
 void server_send_chan_client(channel_client_t *clients, char *msg, server_ctx_t *ctx);
+
 void send_final(client_info_t *receiver, char *msg);
 
+bool add_irc_operator(irc_oper_t **irc_opers, char *hostname, char *mode);
 
+void server_add_irc_operator(irc_operator_t *irc_operators, char *hostname, char *mode);
 
 #endif

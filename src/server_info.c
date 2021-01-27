@@ -123,3 +123,33 @@ void server_send_chan_client(channel_client_t *clients, char *msg, server_ctx_t 
         send_final(receiver, msg);
     }
 }
+
+bool add_irc_operator(irc_oper_t **irc_opers, char *hostname, char *mode)
+{
+    irc_oper_t *irc_oper;
+    HASH_FIND_STR(*irc_opers, hostname, irc_oper);
+    if (irc_oper == NULL) {
+        irc_oper = malloc(sizeof(irc_oper_t));
+        irc_oper->hostname = malloc(sizeof(char) * strlen(hostname));
+        irc_oper->mode = malloc(sizeof(char) * strlen(mode));
+        strcpy(irc_oper->hostname, hostname);
+        strcpy(irc_oper->mode, mode);
+        HASH_ADD_STR(*irc_opers, hostname, irc_oper);
+        return true;
+    }
+    else 
+    {
+        return false;
+    }
+
+}
+
+void server_add_irc_operator(irc_operator_t *irc_operators, char *hostname, char *mode)
+{
+    pthread_mutex_lock(&irc_operators->lock);
+    if (add_irc_operator(&irc_operators->irc_oper, hostname, mode))
+    {
+        irc_operators->num_oper++;
+    }
+    pthread_mutex_lock(&irc_operators->lock);
+}
