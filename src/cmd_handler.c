@@ -97,7 +97,6 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                 if (curr_client->info.username != NULL)
                 {
                     /* If client has entered USER */
-                    connection->registered = true;
                     change_connection(ctx, UNKNOWN, DECR);
                     change_connection(ctx, KNOWN, INCR);
                     reply_welcome(curr_client->info, connection, curr_client);
@@ -137,16 +136,22 @@ int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         }
         else
         {
+            printf ("First time using USER\n");
             client->info.username = malloc(sizeof(char) * strlen(username));
             client->info.realname = malloc(sizeof(char) * strlen(realname));
             if (client->info.nick != NULL)
             {
+                strcpy(client->info.username, username);
+                strcpy(client->info.realname, realname);
                 reply_welcome(client->info, connection, client);
                 /* Client has not been registered */
-                connection->registered = true;
+    
             }
             else
             {
+                // Client has not entered NICK
+                strcpy(client->info.username, username);
+                strcpy(client->info.realname, realname);
                 change_connection(ctx, UNKNOWN, DECR);
                 change_connection(ctx, KNOWN, INCR);
             }
@@ -167,25 +172,32 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     if (!has_entered_NICK(hostname, clients) &&
         !has_entered_USER(hostname, clients))
     {
+        printf ("client quits is unknown connection\n");
+        server_remove_client(ctx, hostname);
         /* -1 number of unknown connections */
         change_connection(ctx, UNKNOWN, DECR);
     }
     else
     {
+        printf ("client quits is known connection\n");
         char *msg = (cmd.params[0] == NULL) ? "Client Quit" : cmd.params[0];
-        char server_msg[MAX_LEN_STR];
         nick_hb_t **nicks = &ctx->nicks_hashtable;
         channel_hb_t **channels = &ctx->channels_hashtable;
         client_info_t *client = get_client_info(hostname, clients);
+        char server_msg[MAX_LEN_STR];
         sprintf(server_msg, ":%s!%s@%s QUIT :%s", client->info.nick,
                 client->info.username, connection->client_hostname, msg);
+        char reply_msg[MAX_LEN_STR];
+        sprintf(reply_msg, "ERROR :Closing Link: %s (%s)\r\n", connection->server_hostname, msg);
+        send_final(client, reply_msg);
+        printf ("here is still good\n");
         /* Remove from nicks hash table */
-        if (client != NULL && client->info.nick != NULL)
-            server_remove_nick(ctx, client->info.nick);
+        server_remove_nick(ctx, client->info.nick);
         /* Remove from clients hash table */
         server_remove_client(ctx, hostname);
         /* Iterate through channels that client is in */
         channel_hb_t *chan;
+        printf ("before loop is fine\n");
         for (chan = *channels; chan != NULL; chan = chan->hh.next)
         {
             if (contains_client(hostname, &chan->channel_clients))
@@ -194,10 +206,11 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                 server_send_chan_client(chan->channel_clients, server_msg, ctx);
             }
         }
+        printf ("after loop is fine\n");
         /* -1 number of known connections */
         change_connection(ctx, KNOWN, DECR);
-        char reply_msg[MAX_LEN_STR];
-        sprintf(reply_msg, "ERROR :Closing Link: %s (%s)", connection->server_hostname, msg);
+        printf ("change connection is fine\n");
+
     }
     return 0;
 }
@@ -603,13 +616,12 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
     int i;
     client_info_t *client = get_client_info(connection->client_hostname,
                                             &ctx->clients_hashtable);
+    bool registered = ((client->info.nick != NULL) && (client->info.username != NULL));
     for (i = 0; i < num_handlers; i++)
     {
         if (sameStr(cmd, handlers[i].name))
         {
-            if ((connection->registered) ||
-                (sameStr(cmd, "NICK")) ||
-                (sameStr(cmd, "USER")))
+            if ((registered) || (sameStr(cmd, "NICK")) || (sameStr(cmd, "USER")))
             {
                 handlers[i].func(full_cmd, connection, ctx);
                 break;
@@ -617,10 +629,11 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
             else
             {
                 reply_error(cmd, ERR_NOTREGISTERED, connection, client);
+                break;
             }
         }
     }
-    if (i == num_handlers)
+    if ((i == num_handlers) && (registered))
     {
         reply_error(cmd, ERR_UNKNOWNCOMMAND, connection, client);
     }

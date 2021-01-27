@@ -125,7 +125,7 @@ void send_final(client_info_t *receiver, char *msg)
     /* Wrapper function to send message to a client socket */
     pthread_mutex_lock(&receiver->lock);
     send(receiver->client_socket, msg, strlen(msg), 0);
-    pthread_mutex_lock(&receiver->lock);
+    pthread_mutex_unlock(&receiver->lock);
 }
 
 void server_send_chan_client(channel_client_t *clients, char *msg,
@@ -170,5 +170,5 @@ void server_add_irc_operator(server_ctx_t *ctx, char *hostname, char *mode)
     {
         ctx->irc_operators_hashtable->num_oper++;
     }
-    pthread_mutex_lock(&ctx->operators_lock);
+    pthread_mutex_unlock(&ctx->operators_lock);
 }

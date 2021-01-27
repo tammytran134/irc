@@ -97,7 +97,6 @@ void *service_single_client(void *args) {
         connection->client_socket = client_socket;
         connection->server_hostname = server_hostname;
         connection->client_hostname = client_hostname;
-        connection->registered = false;
         rmsg = recv_msg(buf, rmsg, ctx, connection);
         printf("gets here tho\n");
     }

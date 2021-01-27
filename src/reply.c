@@ -104,8 +104,16 @@ void reply_error_mult(char *cmd1, char *cmd2, char *reply_code,
 void server_reply(char *msg, char *reply_code, connection_info_t *connection, client_info_t *client)
 {
     char reply_msg[MAX_LEN_STR];
-    char *client_hostname = connection->registered ? connection->client_hostname : "*";
-    sprintf(reply_msg, ":%s %s %s %s\r\n", connection->server_hostname, reply_code, client_hostname, msg);
+    char *client_nickname;
+    if (client->info.nick != NULL) 
+    {
+        client_nickname = client->info.nick; 
+    }
+    else 
+    {
+        client_nickname = "*"; 
+    }
+    sprintf(reply_msg, ":%s %s %s %s\r\n", connection->server_hostname, reply_code, client_nickname, msg);
     //send(connection->client_socket, reply_msg, strlen(reply_msg), 0);
     send_final(client, reply_msg);
 }
@@ -142,7 +150,7 @@ void reply_welcome(user_info_t user_info, connection_info_t *connection, client_
     server_reply(create_msg, RPL_CREATED, connection, client);
     /* Send RPL_MYINFO replies */
     char info_msg[MAX_LEN_STR];
-    sprintf(info_msg, ":%s %s ao mtov",
+    sprintf(info_msg, "%s %s ao mtov",
             connection->server_hostname, VERSION);
     server_reply(info_msg, RPL_MYINFO, connection, client);
 }

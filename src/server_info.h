@@ -62,7 +62,6 @@ typedef struct connection_info
     int client_socket;
     char *server_hostname;
     char *client_hostname;
-    bool registered;
 } connection_info_t;
 
 /* Update number of known or unknown connections in server context object */
