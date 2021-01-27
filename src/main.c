@@ -217,7 +217,9 @@ int main(int argc, char *argv[])
     ctx->clients_hashtable = NULL;
     ctx->nicks_hashtable = NULL;
     ctx->channels_hashtable = NULL;
-    ctx->irc_operators_hashtable = NULL;
+    ctx->irc_operators_hashtable = calloc(1, sizeof(irc_operator_t));
+    ctx->irc_operators_hashtable->irc_oper = NULL;
+    ctx->irc_operators_hashtable->num_oper = 0;
     ctx->password = passwd;
     pthread_mutex_init(&ctx->lock, NULL);
     pthread_mutex_init(&ctx->channels_lock, NULL);

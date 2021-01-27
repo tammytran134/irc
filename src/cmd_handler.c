@@ -54,6 +54,45 @@ bool check_cmd(int input, int standard, char *operator)
     }
 }
 
+int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
+{
+    client_info_t *client = get_client_info(connection->client_hostname,
+                                            &ctx->clients_hashtable);
+    //RPL_LUSERCLIENT, those who have put in both nick and user
+    int num_of_clients = ctx->num_connections;
+    int num_of_services = NUM_SERVICES;
+    int num_of_servers = NUM_SERVERS;
+    char luserclient[MAX_LEN_STR];
+    sprintf(luserclient, ":There are %d users and %d services on %d servers",
+            num_of_clients, num_of_services, num_of_servers);
+    server_reply(luserclient, RPL_LUSERCLIENT, connection, client);
+    //RPL_LUSEROP
+    int num_of_operators = ctx->irc_operators_hashtable->num_oper;
+    char luserop[MAX_LEN_STR];
+    sprintf(luserop, "%d :operator(s) online",
+            num_of_operators);
+    server_reply(luserop, RPL_LUSEROP, connection, client);
+    //RPL_LUSERUNKNOWN: haven't received any nick or user
+    int num_of_unknown_connections = ctx->num_unknown_connections;
+    char luserunknown[MAX_LEN_STR];
+    sprintf(luserunknown, "%d :unknown connection(s)",
+            num_of_unknown_connections);
+    server_reply(luserunknown, RPL_LUSERUNKNOWN, connection, client);
+    //RPL_LUSERCHANNELS
+    int num_of_channels = count_channels(&ctx->channels_hashtable);
+    char luserchannels[MAX_LEN_STR];
+    sprintf(luserchannels, "%d :channels formed",
+            num_of_channels);
+    server_reply(luserchannels, RPL_LUSERCHANNELS, connection, client);
+    //RPL_LUSERME: connections, excluding unknown ones
+    int num_of_connections = ctx->num_connections;
+    char luserme[MAX_LEN_STR];
+    sprintf(luserme, ":I have %d clients and %d servers",
+            num_of_connections, NUM_SERVERS);
+    server_reply(luserme, RPL_LUSERME, connection, client);
+    return 0;
+}
+
 int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     client_info_t *clients = ctx->clients_hashtable;
@@ -100,6 +139,8 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                     change_connection(ctx, UNKNOWN, DECR);
                     change_connection(ctx, KNOWN, INCR);
                     reply_welcome(curr_client->info, connection, curr_client);
+                    handler_LUSERS(cmd, connection, ctx);
+                    send_final(client, ":hostname 422 user1 :MOTD File is missing\r\n");
                 }
                 else
                 {
@@ -144,6 +185,8 @@ int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                 strcpy(client->info.username, username);
                 strcpy(client->info.realname, realname);
                 reply_welcome(client->info, connection, client);
+                handler_LUSERS(cmd, connection, ctx);
+                send_final(client, ":hostname 422 user1 :MOTD File is missing\r\n");
                 /* Client has not been registered */
     
             }
@@ -168,6 +211,7 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
      * Send messages to client and channels acorrdingly
      */
     char *hostname = connection->client_hostname;
+    int client_socket = connection->client_socket;
     client_info_t **clients = &ctx->clients_hashtable;
     if (!has_entered_NICK(hostname, clients) &&
         !has_entered_USER(hostname, clients))
@@ -180,7 +224,15 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     else
     {
         printf ("client quits is known connection\n");
-        char *msg = (cmd.params[0] == NULL) ? "Client Quit" : cmd.params[0];
+        char *msg;
+        if (cmd.num_params == 0)
+        {
+            msg = "Client Quit";
+        }
+        else 
+        {
+            msg = cmd.params[0];
+        }
         nick_hb_t **nicks = &ctx->nicks_hashtable;
         channel_hb_t **channels = &ctx->channels_hashtable;
         client_info_t *client = get_client_info(hostname, clients);
@@ -212,6 +264,8 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         printf ("change connection is fine\n");
 
     }
+    close(client_socket);
+    pthread_exit(NULL);
     return 0;
 }
 
@@ -552,45 +606,6 @@ int handler_PING(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 int handler_PONG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     // do nothing
-    return 0;
-}
-
-int handler_LUSERS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
-{
-    client_info_t *client = get_client_info(connection->client_hostname,
-                                            &ctx->clients_hashtable);
-    //RPL_LUSERCLIENT, those who have put in both nick and user
-    int num_of_clients = ctx->num_connections;
-    int num_of_services = NUM_SERVICES;
-    int num_of_servers = NUM_SERVERS;
-    char luserclient[MAX_LEN_STR];
-    sprintf(luserclient, ":There are %d users and %d services on %d servers",
-            num_of_clients, num_of_services, num_of_servers);
-    server_reply(luserclient, RPL_LUSERCLIENT, connection, client);
-    //RPL_LUSEROP
-    int num_of_operators = ctx->irc_operators_hashtable->num_oper;
-    char luserop[MAX_LEN_STR];
-    sprintf(luserop, "%d :operator(s) online",
-            num_of_operators);
-    server_reply(luserop, RPL_LUSEROP, connection, client);
-    //RPL_LUSERUNKNOWN: haven't received any nick or user
-    int num_of_unknown_connections = ctx->num_unknown_connections;
-    char luserunknown[MAX_LEN_STR];
-    sprintf(luserunknown, "%d :unknown connection(s)",
-            num_of_unknown_connections);
-    server_reply(luserunknown, RPL_LUSERUNKNOWN, connection, client);
-    //RPL_LUSERCHANNELS
-    int num_of_channels = count_channels(&ctx->channels_hashtable);
-    char luserchannels[MAX_LEN_STR];
-    sprintf(luserchannels, "%d :channels formed",
-            num_of_channels);
-    server_reply(luserchannels, RPL_LUSERCHANNELS, connection, client);
-    //RPL_LUSERME: connections, excluding unknown ones
-    int num_of_connections = ctx->num_connections;
-    char luserme[MAX_LEN_STR];
-    sprintf(luserme, ":I have %d clients and %d servers",
-            num_of_connections, NUM_SERVERS);
-    server_reply(luserme, RPL_LUSERME, connection, client);
     return 0;
 }
 
