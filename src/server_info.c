@@ -134,12 +134,18 @@ void server_send_chan_client(channel_client_t *clients, char *msg,
 {
     channel_client_t *client = NULL;
     char *nick;
-    for (client = clients; client != NULL; client = clients->hh.next)
+    for (client = clients; client != NULL; client = client->hh.next)
     {
         nick = client->nick;
+        printf("server_send_chan_client: %s\n", nick);
         client_info_t *recvr = get_client_w_nick(nick, &ctx->clients_hashtable,
                                                 &ctx->nicks_hashtable);
+        if(recvr == NULL)
+        {
+            printf("recvr is NULL\n");
+        }
         send_final(recvr, msg);
+        printf("sever_send_chan_client: sent final message\n");
     }
 }
 

@@ -16,7 +16,7 @@ void add_nick(char *nick, int client_socket, nick_hb_t **nicks)
     nick_i->nick = malloc(sizeof(char) * strlen(nick));
     strcpy(nick_i->nick, nick);
     nick_i->client_socket = client_socket;
-    HASH_ADD_INT(*nicks, nick, nick_i);
+    HASH_ADD_STR(*nicks, nick, nick_i);
     return;
 }
 
@@ -71,6 +71,7 @@ client_info_t *get_client_w_nick(
     {
         return get_client_info(nick_i->client_socket, clients);
     }
+    printf("get_client_w_nick: nick_i is NULL\n");
     return NULL;
 }
 

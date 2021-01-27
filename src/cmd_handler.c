@@ -335,9 +335,14 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             return 0;
         }
         /* Add client to channel */
-        printf("handler_JOIN: obtaining lock...");
+        printf("handler_JOIN: obtaining lock...\n");
         server_add_chan_client(channel, curr_client->info.nick,
                                channel == NULL);
+        // channel_client_t *c_client = get_channel_client(curr_client->info.nick, &channel->channel_clients);
+        // if(c_client == NULL)
+        // {
+        //     printf("chan_client is NULL\n");
+        // }
         printf("handler_JOIN: released lock!\n");
         /* Channel data after operation */
         channel = get_channel_info(channel_name, &ctx->channels_hashtable);
