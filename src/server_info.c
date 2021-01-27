@@ -120,7 +120,7 @@ void server_remove_channel(server_ctx_t *ctx, char *channel_name)
     pthread_mutex_unlock(&ctx->channels_hashtable->lock);
 }
 
-void send_final(client_info_t *receiver, char *msg) 
+void send_final(client_info_t *receiver, char *msg)
 {
     /* Wrapper function to send message to a client socket */
     pthread_mutex_lock(&receiver->lock);
@@ -128,10 +128,16 @@ void send_final(client_info_t *receiver, char *msg)
     pthread_mutex_lock(&receiver->lock);
 }
 
-
-//void join_channel(server_info *ctx, *client)
-//{
-// call function from channels.h
-// claim mutex
-//    add_channel_client(hostname, mode, &(ctx->channels_hashtable));
-//}
+void server_send_chan_client(channel_client_t *clients, char *msg,
+                             server_ctx_t *ctx)
+{
+    channel_client_t *client = NULL;
+    char *client_hostname;
+    for (client = clients; client != NULL; client = clients->hh.next)
+    {
+        client_hostname = client->hostname;
+        client_info_t *receiver = get_client_info(client_hostname,
+                                                  &ctx->clients_hashtable);
+        send_final(receiver, msg);
+    }
+}

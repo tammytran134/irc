@@ -97,6 +97,10 @@ void *service_single_client(void *args) {
     if (has_entered_NICK(client_hostname, &clients) || 
         has_entered_USER(client_hostname, &clients))
     {
+        change_connection(ctx, KNOWN, DECR);
+    }
+    else 
+    {
         change_connection(ctx, UNKNOWN, DECR);
     }
     close(client_socket);

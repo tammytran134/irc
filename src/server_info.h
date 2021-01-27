@@ -78,8 +78,8 @@ void server_add_channel(server_ctx_t *ctx, char *channel_name);
 void server_remove_channel(server_ctx_t *ctx, char *channel_name);
 
 /* Wrapper function to send message to a client socket */
+void server_send_chan_client(channel_client_t *clients, char *msg,
+                             server_ctx_t *ctx);
 void send_final(client_info_t *receiver, char *msg);
-
-
 
 #endif
