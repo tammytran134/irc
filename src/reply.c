@@ -96,14 +96,14 @@ void reply_error_mult(char *cmd1, char *cmd2, char *reply_code,
     char reply_msg[MAX_LEN_STR];
     if (strcmp(reply_code, ERR_UNKNOWNMODE) == 0)
     {
-        sprintf(reply_msg, "%c :is unknown mode char to me for #%s",
+        sprintf(reply_msg, "%c :is unknown mode char to me for %s",
                 cmd1[1],
                 cmd2);
         server_reply(reply_msg, reply_code, connection, client);
     }
     else if (strcmp(reply_code, ERR_USERNOTINCHANNEL) == 0)
     {
-        sprintf(reply_msg, "%s #%s :They aren't on that channel",
+        sprintf(reply_msg, "%s %s :They aren't on that channel",
                 cmd1, cmd2);
         server_reply(reply_msg, reply_code, connection, client);
     }
