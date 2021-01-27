@@ -20,7 +20,6 @@ msg_t recv_msg(
      * This message returns the updated msg_t struct back to the main function,
      * so that the msg_t state gets updated between each recv() call
      */
-    printf ("it comes to recv_msg\n");
     char c;
     for (int i = 0; i < strlen(buf); i++)
     {
@@ -156,13 +155,12 @@ cmd_t parse_msg(char *msg_buffer)
                     token = strtok_r(token_rest, " :\t\r\n", &token_rest);
                 }
                 strcpy(parsed_msg.params[counter - 1], token);
-                printf("token 1 is %s with length %ld\n", token, strlen(token));
+                // printf("token 1 is %s with length %ld\n", token, strlen(token));
             }
             else
             {
                 /* Param takes up rest of message */
                 /* Accumulate the rest of param into params[counter - 1] */
-                printf("BREAK 1\n");
                 char *param_so_far = parsed_msg.params[counter - 1];
                 int concat_param_len = strlen(param_so_far) 
                                         + strlen(token) + 1;
@@ -170,11 +168,9 @@ cmd_t parse_msg(char *msg_buffer)
                 concat_param = strcat(strcat(param_so_far, " "), token);
                 free(parsed_msg.params[counter - 1]);
                 // size_t new_param_size = sizeof(char) * concat_param_len;
-                printf("BREAK 2\n");
                 parsed_msg.params[counter - 1] = malloc(sizeof(char) * MAX_STR_LEN);
-                printf("BREAK 3\n");
                 strcpy(parsed_msg.params[counter - 1], concat_param);
-                printf ("token 2 is %s\n", token);
+                // printf ("token 2 is %s\n", token);
             }
         }
 

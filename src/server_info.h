@@ -18,7 +18,7 @@
 
 typedef struct irc_oper
 {
-    char *hostname; /* key */
+    char *nick; /* key */
     char *mode;     /* value */
     UT_hash_handle hh;
 } irc_oper_t;
@@ -71,20 +71,19 @@ void change_connection(server_ctx_t *ctx, int mode, int operator);
 void server_add_client(server_ctx_t *ctx, client_info_t *client);
 
 /* Remove client from server context object's clients hash table */
-void server_remove_client(server_ctx_t *ctx, char *hostname);
+void server_remove_client(server_ctx_t *ctx, int client_socket);
 
 /* Add nick to server context object's nicks hash table */
-void server_add_nick(server_ctx_t *ctx, char *nick, char *hostname);
+void server_add_nick(server_ctx_t *ctx, char *nick, int client_socket);
 
 /* Remove nick from sever context object's nicks and hash table */
 void server_remove_nick(server_ctx_t *ctx, char *nick);
 
 /* Add client to channel in server context object's channels hash table */
-void server_add_chan_client(channel_hb_t *channel, char *hostname,
-                            bool is_oper);
+void server_add_chan_client(channel_hb_t *channel, char *nick, bool is_oper);
 
 /* Remove client from channel in server context object's channels hash table */
-void server_remove_chan_client(channel_hb_t *channel, char *hostname);
+void server_remove_chan_client(channel_hb_t *channel, char *nick);
 
 /* Add channel to server context object's channels hash table */
 void server_add_channel(server_ctx_t *ctx, char *channel_name);
@@ -97,9 +96,9 @@ void server_send_chan_client(channel_client_t *clients, char *msg,
 
 void send_final(client_info_t *receiver, char *msg);
 
-bool add_irc_operator(irc_oper_t **irc_opers, char *hostname, char *mode);
+bool add_irc_operator(irc_oper_t **irc_opers, char *nick, char *mode);
 
-void server_add_irc_operator(server_ctx_t *ctx, char *hostname, char *mode);
+void server_add_irc_operator(server_ctx_t *ctx, char *nick, char *mode);
 
 void server_close_socket (server_ctx_t *ctx, int client_socket);
 

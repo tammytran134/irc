@@ -9,24 +9,22 @@
 /* A hash table for clients' information in a channel */
 typedef struct channel_client
 {
-    char *hostname; /* key */
+    char *nick; /* key */
     char *mode;     /* value */
     UT_hash_handle hh;
 } channel_client_t;
 
 /* Add client to channel */
-void add_channel_client(char *hostname, channel_client_t **clients,
-                        bool is_oper);
+void add_channel_client(char *nick, channel_client_t **clients, bool is_oper);
 
 /* Remove client from channel */
-void remove_channel_client(char *hostname, channel_client_t **clients);
+void remove_channel_client(char *nick, channel_client_t **clients);
 
 /* Check if channel contains client */
-bool contains_client(char *hostname, channel_client_t **clients);
+bool contains_client(char *nick, channel_client_t **clients);
 
 /* Get client's information in channel */
-channel_client_t* get_channel_client(char *hostname, 
-                                    channel_client_t **clients);
+channel_client_t* get_channel_client(char *nick, channel_client_t **clients);
 
 /* A hash table for channels on the server */
 typedef struct channel_hb

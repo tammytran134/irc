@@ -6,38 +6,38 @@
 
 #include "channels.h"
 
-void add_channel_client(char *hostname, channel_client_t **clients,
+void add_channel_client(char *nick, channel_client_t **clients,
                         bool is_oper)
 {
     /* Add client to channel */
     channel_client_t *client;
-    HASH_FIND_STR(*clients, hostname, client);
+    HASH_FIND_STR(*clients, nick, client);
     if (client == NULL)
     {
         client = malloc(sizeof(channel_client_t));
-        client->hostname = malloc(sizeof(char) * strlen(hostname));
-        strcpy(client->hostname, hostname);
+        client->nick = malloc(sizeof(char) * strlen(nick));
+        strcpy(client->nick, nick);
         client->mode = malloc(sizeof(char) * 2);
         strcpy(client->mode, is_oper ? "+o" : "-o");
-        HASH_ADD_STR(*clients, hostname, client);
+        HASH_ADD_STR(*clients, nick, client);
     }
 }
 
-void remove_channel_client(char *hostname, channel_client_t **clients)
+void remove_channel_client(char *nick, channel_client_t **clients)
 {
     /* Remove client from channel */
     channel_client_t *client;
-    HASH_FIND_STR(*clients, hostname, client);
+    HASH_FIND_STR(*clients, nick, client);
     if (client != NULL)
         HASH_DELETE(hh, *clients, client);
 }
 
-channel_client_t* get_channel_client(char *hostname, 
+channel_client_t* get_channel_client(char *nick, 
                                     channel_client_t **clients)
 {
     /* Get client's information in channel */
     channel_client_t *client;
-    HASH_FIND_STR(*clients, hostname, client);
+    HASH_FIND_STR(*clients, nick, client);
     return client;
 }
 
@@ -65,11 +65,19 @@ void remove_channel(char *channel_name, channel_hb_t **channels)
     }
 }
 
-bool contains_client(char *hostname, channel_client_t **clients)
+bool contains_client(char *nick, channel_client_t **clients)
 {
     /* Check if channel contains client */
     channel_client_t *result;
-    HASH_FIND_STR(*clients, hostname, result);
+    HASH_FIND_STR(*clients, nick, result);
+    if (result)
+    {
+        printf("contains_client: result is not NULL...\n");
+        if (result->nick != NULL)
+        {
+            printf("contains_client: result->nick = %s\n", result->nick);
+        }
+    }
     return result != NULL;
 }
 
