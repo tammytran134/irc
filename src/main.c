@@ -105,6 +105,7 @@ void *service_single_client(void *args) {
         connection->client_hostname = client_hostname;
         recv_msg(buf, rmsg, ctx, connection);
     }
+    free(rmsg->msg);
     /* if client's connection is unknown, change the 
      * unknown_connection field in ctx when client quits
      */

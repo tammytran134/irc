@@ -434,7 +434,7 @@ int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                 return 0;
             }
             else
-            {   
+            {
                 // if channel is found and client is in it
                 if (contains_client(client->info.nick, 
                                     &channel->channel_clients))
@@ -898,7 +898,7 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
             if ((registered) || (sameStr(cmd, "NICK")) || 
                                                         (sameStr(cmd, "USER")))
             {
-                //print_cmd(full_cmd);
+                // print_cmd(full_cmd);
                 handlers[i].func(full_cmd, connection, ctx);
                 break;
             }
