@@ -111,26 +111,26 @@
 
 
 
-/* This 2 functions below specifically deal with sending
- * error messages to client
+/* These 2 functions below specifically deal with constructing
+ * error messages to send to client
  */
 
 /* This function takes in the string that needs to be
- * passed into the reply, the reply code, and
- * connection_info_t and client_info_t that has
+ * passed into the error reply, the reply code, and
+ * connection_info_t and client_info_t that have
  * client's and server's information to construct
  * error reply messages
- * and pass these reply messages to server_reply
+ * Output: void, just send messages
  */
 void reply_error(char *cmd, char *reply_code, connection_info_t *connection, 
                 client_info_t *client);
 
 /* This function takes in 2 strings that need to be
  * passed into the reply, the reply code, and
- * connection_info_t and client_info_t that has
+ * connection_info_t and client_info_t that have
  * client's and server's information to construct
  * error reply messages
- * and pass these reply messages to server_reply
+ * Output: void, just send messages
  */
 void reply_error_mult(char *cmd1, char *cmd2, char *reply_code, 
                 connection_info_t *connection, client_info_t *client);
@@ -140,15 +140,33 @@ void reply_error_mult(char *cmd1, char *cmd2, char *reply_code,
  * to the client, it takes in the messages that 
  * we want to send, the reply code, and
  * connection_info_t and client_info_t that has
- * client's and server's information
+ * client's and server's information and
+ * concatenate the appropriate prefix to the messages
+ * Output: void, just send messages
  */
 void server_reply(char *msg, char *reply_code, connection_info_t *connection, 
                 client_info_t *client);
+
+/* relay_reply function deals with sending *relay* messages
+ * from the client to other clients and channels.
+ * It takes in the messages that 
+ * we want to send, the reply code, and
+ * connection_info_t and client_info_t that have
+ * client's and server's information and
+ * concatenate the appropriate prefix to the messages
+ * Output: void, just send messages
+ */
 void relay_reply(char *msg, connection_info_t *connection, 
                 client_info_t *sender, client_info_t *receiver);
 
-/* Welcome message */
-void reply_welcome(user_info_t user_info, connection_info_t *connection, 
+/* Send all replies required after a user has finished
+ * registering: RPL_WELCOME, RPL_YOURHOST, Send RPL_CREATED, 
+ * Send RPL_MYINFO
+ * Input: client_info_t and connection_info_t struct 
+ * for information on user's server and registration information
+ * Output: void, just send messages
+ */
+void reply_welcome(connection_info_t *connection, 
                     client_info_t *client);
 
 #endif /* REPLY_H_ */

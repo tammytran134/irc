@@ -168,7 +168,7 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                 if (curr_client->info.username != NULL)
                 {
                     /* If client has entered USER */
-                    reply_welcome(curr_client->info, connection, curr_client);
+                    reply_welcome( connection, curr_client);
                     handler_LUSERS(cmd, connection, ctx);
                     reply_error(cmd.command, ERR_NOMOTD, connection, curr_client);
                     return 0;
@@ -216,7 +216,7 @@ int handler_USER(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             if (client->info.nick != NULL)
             {
                 /* Client has entered NICK */
-                reply_welcome(client->info, connection, client);
+                reply_welcome(connection, client);
                 handler_LUSERS(cmd, connection, ctx);
                 reply_error(cmd.command, ERR_NOMOTD, connection, client);
     
@@ -408,14 +408,12 @@ int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     if (cmd.num_params == PRIVMSG_PAM_NO_RECIPIENT)
     {
         // ERR_NORECIPIENT
-        printf ("it goes here1\n");
         reply_error(cmd.command, ERR_NORECIPIENT, connection, client);
         return 0;
     }
     if (cmd.num_params == PRIVMSG_PAM_NO_TEXT)
     {
         // ERR_NOTEXTTOSEND
-        printf ("it goes here2\n");
         reply_error(cmd.command, ERR_NOTEXTTOSEND, connection, client);
         return 0;
     }
@@ -437,8 +435,6 @@ int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             }
             else
             {   
-                printf ("it goes here3\n");
-                //print_cmd(cmd);
                 // if channel is found and client is in it
                 if (contains_client(client->info.nick, 
                                     &channel->channel_clients))
@@ -475,8 +471,6 @@ int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             }
             else
             {
-                printf ("it goes here4\n");
-                //print_cmd(cmd);
                 // send message to target client
                 char server_msg[MAX_STR_LEN];
                 sprintf (server_msg, "PRIVMSG %s :%s", cmd.params[0], cmd.params[1]);
@@ -904,7 +898,7 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
             if ((registered) || (sameStr(cmd, "NICK")) || 
                                                         (sameStr(cmd, "USER")))
             {
-                print_cmd(full_cmd);
+                //print_cmd(full_cmd);
                 handlers[i].func(full_cmd, connection, ctx);
                 break;
             }

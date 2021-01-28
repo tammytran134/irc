@@ -115,6 +115,7 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx);
 /* DEBUG tool */
 void print_cmd(cmd_t full_cmd);
 
+/* dispatch table for IRC command */
 typedef struct handler_entry
 {
     char *name; // Name of IRC command

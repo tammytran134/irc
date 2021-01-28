@@ -142,15 +142,15 @@ void relay_reply(char *msg, connection_info_t *connection,
     send_final(receiver, reply_msg);
 }
 
-void reply_welcome(user_info_t user_info, connection_info_t *connection, 
+void reply_welcome(connection_info_t *connection, 
                     client_info_t *client)
 {
     /* Send RPL_WELCOME */
     char welcome_msg[MAX_LEN_STR];
     sprintf(welcome_msg,
             ":Welcome to the Internet Relay Network %s!%s@%s",
-            user_info.nick,
-            user_info.username,
+            client->info.nick,
+            client->info.username,
             connection->client_hostname);
     server_reply(welcome_msg, RPL_WELCOME, connection, client);
     /* Send RPL_YOURHOST */
