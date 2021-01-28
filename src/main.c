@@ -311,7 +311,8 @@ int main(int argc, char *argv[])
         wa->client_hostname = client_hostname;
         wa->ctx = ctx;
 
-        if (pthread_create(&worker_thread, NULL, service_single_client, wa) != 0)
+        if (pthread_create(&worker_thread, NULL, 
+                                service_single_client, wa) != 0)
         {
             perror("Could not create a worker thread");
             free(client_addr);
