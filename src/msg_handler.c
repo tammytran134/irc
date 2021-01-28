@@ -100,7 +100,6 @@ void recv_msg(
                             rmsg->user_cmd = true;
                         }
                     }
-                    printf("went here\n");
                     exec_cmd(cmd, connection, ctx);
                     /* renew the msg_t struct to wipe out the char *msg buffer
                      * and renew the counter to hold new message
