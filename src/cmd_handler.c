@@ -268,8 +268,10 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         client_info_t *client = get_client_info(client_socket, clients);
         char *nick = client->info.nick;
         char server_msg[MAX_LEN_STR];
+        printf ("Quit msg is %s\n", msg);
         sprintf(server_msg, ":%s!%s@%s QUIT :%s", client->info.nick,
                 client->info.username, connection->client_hostname, msg);
+        printf ("Whole msg is %s\n", server_msg);
         /* send QUIT message to client */
         char reply_msg[MAX_LEN_STR];
         sprintf(reply_msg, "ERROR :Closing Link: %s (%s)\r\n", 
