@@ -152,7 +152,8 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             {
                 /* Client has entered NICK before */
                 /* Update nick in client's entry in clients hash table */
-                curr_client->info.nick = malloc(sizeof(char) * strlen(nickname));
+                curr_client->info.nick = malloc(sizeof(char) 
+                                                        * strlen(nickname));
                 strcpy(curr_client->info.nick, nickname);
                 /* Update nick in nicks hashtable */
                 server_remove_nick(ctx, nickname);
@@ -161,7 +162,8 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             else
             {
                 /* Client has not entered NICK */
-                curr_client->info.nick = malloc(sizeof(char) * strlen(nickname));
+                curr_client->info.nick = malloc(sizeof(char) 
+                                                        * strlen(nickname));
                 strcpy(curr_client->info.nick, nickname);
                 /* Add client's nick to server's nicks hash table */
                 server_add_nick(ctx, nickname, connection->client_socket);
@@ -170,7 +172,8 @@ int handler_NICK(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                     /* If client has entered USER */
                     reply_welcome( connection, curr_client);
                     handler_LUSERS(cmd, connection, ctx);
-                    reply_error(cmd.command, ERR_NOMOTD, connection, curr_client);
+                    reply_error(cmd.command, ERR_NOMOTD, 
+                                            connection, curr_client);
                     return 0;
                 }
                 else
@@ -290,7 +293,8 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             if (contains_client(nick, &chan->channel_clients))
             {
                 server_remove_chan_client(chan, nick);
-                server_send_chan_client(chan->channel_clients, server_msg, ctx);
+                server_send_chan_client(chan->channel_clients, 
+                                            server_msg, ctx);
             }
         }
         /* -1 number of known connections */
@@ -323,7 +327,8 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     else
     {
         char *channel_name = cmd.params[0];
-        channel_hb_t *channel = get_channel_info(channel_name, &ctx->channels_hashtable);
+        channel_hb_t *channel = get_channel_info(channel_name, 
+                                                        &ctx->channels_hashtable);
         bool is_operator = false;
         if (channel == NULL)
         {
@@ -342,12 +347,6 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         //printf("handler_JOIN: obtaining lock...\n");
         server_add_chan_client(channel, curr_client->info.nick,
                                is_operator);
-        // channel_client_t *c_client = get_channel_client(curr_client->info.nick, &channel->channel_clients);
-        // if(c_client == NULL)
-        // {
-        //     printf("chan_client is NULL\n");
-        // }
-        //printf("handler_JOIN: released lock!\n");
         /* Channel data after operation */
         channel = get_channel_info(channel_name, &ctx->channels_hashtable);
         channel_client_t *chan_clients = channel->channel_clients;
@@ -358,9 +357,7 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                 curr_client->info.username,
                 curr_client->hostname,
                 channel_name);
-        //printf("handler_JOIN: sending messages to channel clients...\n");
         server_send_chan_client(chan_clients, msg, ctx);
-        //printf("handler_JOIN: sent messages to clients!\n");
         /* Send RPL_NAMREPLY AND RPL_ENDOFNAMES to client */
         char server_msg[MAX_LEN_STR];
         char single_msg[MAX_LEN_STR];
@@ -400,7 +397,8 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 }
 
 /* function to handler PRIVMSG command */
-int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
+int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, 
+                                            server_ctx_t *ctx)
 {
     print_cmd(cmd);
     client_info_t *client = get_client_info(connection->client_socket,
@@ -444,7 +442,8 @@ int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                     sprintf(relay_msg, ":%s!%s@%s PRIVMSG %s :%s\r\n", 
                             client->info.nick,
                             client->info.username, 
-                            connection->client_hostname, cmd.params[0], cmd.params[1]);
+                            connection->client_hostname, cmd.params[0], 
+                                                            cmd.params[1]);
                     server_send_chan_client(channel->channel_clients, 
                                             relay_msg, ctx);
                     return 0;
@@ -473,7 +472,8 @@ int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             {
                 // send message to target client
                 char server_msg[MAX_STR_LEN];
-                sprintf (server_msg, "PRIVMSG %s :%s", cmd.params[0], cmd.params[1]);
+                sprintf (server_msg, "PRIVMSG %s :%s", cmd.params[0], 
+                                                        cmd.params[1]);
                 relay_reply(server_msg, connection, client, receiver);
                 return 0;
             }
@@ -521,7 +521,8 @@ int handler_NOTICE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                     sprintf(relay_msg, ":%s!%s@%s NOTICE %s :%s\r\n", 
                             client->info.nick,
                             client->info.username, 
-                            connection->client_hostname, cmd.params[0], cmd.params[1]);
+                            connection->client_hostname, cmd.params[0], 
+                                                        cmd.params[1]);
                     server_send_chan_client(channel->channel_clients, 
                                             relay_msg, ctx);
                     return 0;
@@ -544,7 +545,8 @@ int handler_NOTICE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             else
             {
                 char server_msg[MAX_STR_LEN];
-                sprintf (server_msg, "NOTICE %s :%s", cmd.params[0], cmd.params[1]);
+                sprintf (server_msg, "NOTICE %s :%s", cmd.params[0], 
+                                                        cmd.params[1]);
                 relay_reply(server_msg, connection, client, receiver);
                 return 0;
             }
@@ -595,7 +597,8 @@ int handler_PART(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             }
             sprintf(relay_msg, ":%s!%s@%s PART %s :%s\r\n", client->info.nick, 
                                             client->info.username, 
-                                            connection->client_hostname, channel_name, msg);
+                                            connection->client_hostname, 
+                                                        channel_name, msg);
             // relay PART message to all members of the channel
             server_send_chan_client(channel->channel_clients, relay_msg, ctx);
             // remove client from the channel
@@ -632,9 +635,11 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             channel_name = channel->channel_name;
             num_channel_clients = count_channel_clients
                                                 (&channel->channel_clients);
-            sprintf(one_msg, ":%s %s %s %s %d :\r\n", connection->server_hostname, 
-                                            RPL_LIST, client->info.nick, channel_name, 
-                                                num_channel_clients);
+            sprintf(one_msg, ":%s %s %s %s %d :\r\n", 
+                                            connection->server_hostname, 
+                                            RPL_LIST, client->info.nick, 
+                                            channel_name, 
+                                            num_channel_clients);
             strcat(reply_msg, one_msg);
         }
         printf ("final message is %s\n", reply_msg);
@@ -710,7 +715,8 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
     /* Update target nick's mode and notify channel */
     strcpy(target_chan_client->mode, mode);
-    printf ("new mode of %s is %s\n", target_chan_client->nick, target_chan_client->mode);
+    printf ("new mode of %s is %s\n", target_chan_client->nick, 
+                                    target_chan_client->mode);
     char relay_msg[MAX_STR_LEN];
     sprintf(relay_msg, ":%s!%s@%s MODE %s %s %s\r\n",
                     curr_client->info.nick,
@@ -779,7 +785,8 @@ int handler_WHOIS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
     char *client_hostname = connection->client_hostname;
     client_info_t *clients = ctx->clients_hashtable;
-    client_info_t *client = get_client_info(connection->client_socket, &clients);
+    client_info_t *client = get_client_info(connection->client_socket, 
+                                                    &clients);
     if (!(check_cmd(cmd.num_params, WHOIS_PAM, ">=")))
     {
         return 0;
@@ -804,24 +811,6 @@ int handler_WHOIS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                             target_client->server_hostname, 
                             target_client->info.realname);
             server_reply(whoisuser, RPL_WHOISUSER, connection, client);
-            /* RPL_WHOISCHANNELS */
-            // bool channel_member = false;
-            // channel_hb_t **channels = &ctx->channels_hashtable;
-            // channel_hb_t *chan;
-            // char whoischannels[MAX_LEN_STR];
-            // for (chan = *channels; chan != NULL; chan = chan->hh.next)
-            // {
-            //     if (contains_client(target_client->info.nick, &chan->channel_clients))
-            //     {
-            //         channel_member = true;
-            //         break;
-            //     }
-            // }
-            // char whoischannels[MAX_LEN_STR];
-            // sprintf(whoischannels, "%s %s :Project1b", 
-            //         target_client->info.nick, target_client->server_hostname);
-            // server_reply(whoischannels, RPL_WHOISCHANNELS, connection, client);
-
             /* RPL_WHOISSERVER */
             char whoisserver[MAX_LEN_STR];
             sprintf(whoisserver, "%s %s :Project1b", 

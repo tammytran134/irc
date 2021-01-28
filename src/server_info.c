@@ -8,7 +8,6 @@
 
 #include "server_info.h"
 
-/* Functions related to thread/mutex */
 void change_connection(server_ctx_t *ctx, int mode, int operator)
 {
     /* Update number of known or unknown connections */
