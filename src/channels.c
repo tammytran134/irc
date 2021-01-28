@@ -9,7 +9,12 @@
 void add_channel_client(char *nick, channel_client_t **clients,
                         bool is_oper)
 {
-    /* Add client to channel */
+    /* @Purpose: Add client to channel
+     * @Params:
+     * nick: pointer to nick string
+     * clients: pointer to channel's clients hash table's pointer
+     * is_oper: whether channel client to be added is an operator
+     */
     channel_client_t *client;
     HASH_FIND_STR(*clients, nick, client);
     if (client == NULL)
@@ -25,7 +30,11 @@ void add_channel_client(char *nick, channel_client_t **clients,
 
 void remove_channel_client(char *nick, channel_client_t **clients)
 {
-    /* Remove client from channel */
+    /* @Purpose: Remove client from channel
+     * @Params:
+     * nick: pointer to nick string
+     * clients: pointer to channel's clients hash table's pointer
+     */
     channel_client_t *client;
     HASH_FIND_STR(*clients, nick, client);
     if (client != NULL)
@@ -35,7 +44,12 @@ void remove_channel_client(char *nick, channel_client_t **clients)
 channel_client_t* get_channel_client(char *nick, 
                                     channel_client_t **clients)
 {
-    /* Get client's information in channel */
+    /* @Purpose: Get client's information in channel with nick
+     * @Params:
+     * nick: pointer to nick string
+     * clients: pointer to channel's clients hash table's pointer
+     * @Output: channel client struct
+     */
     channel_client_t *client;
     HASH_FIND_STR(*clients, nick, client);
     return client;
@@ -43,7 +57,11 @@ channel_client_t* get_channel_client(char *nick,
 
 void add_channel(char *name, channel_hb_t **channels)
 {
-    /* Add channel to server */
+    /* @Purpose: Add channel to server
+     * @Params:
+     * name: pointer to channel's name string
+     * channels: pointer to channels hash table's pointer
+     */
     channel_hb_t *channel = malloc(sizeof(*channel));
     channel->channel_clients = NULL;
     channel->channel_name = malloc(sizeof(char) * strlen(name));
@@ -55,7 +73,11 @@ void add_channel(char *name, channel_hb_t **channels)
 
 void remove_channel(char *channel_name, channel_hb_t **channels)
 {
-    /* Remove channel from server */
+    /* @Purpose: Remove channel from server
+     * @Params:
+     * channel_name: pointer to channel's name string
+     * channels: pointer to channels hash table's pointer
+     */
     channel_hb_t *channel;
     HASH_FIND_STR(*channels, channel_name, channel);
     if (channel != NULL)
@@ -67,7 +89,12 @@ void remove_channel(char *channel_name, channel_hb_t **channels)
 
 bool contains_client(char *nick, channel_client_t **clients)
 {
-    /* Check if channel contains client */
+    /* @Purpose: Checks if channel contains a client with given nick
+     * @Params:
+     * nick: pointer to target client's nick string
+     * clients: pointer to channel's clients hash table's pointer
+     * @Output: True if client is a member of channel, otherwise False
+     */
     channel_client_t *result;
     HASH_FIND_STR(*clients, nick, result);
     if (result)
@@ -83,19 +110,33 @@ bool contains_client(char *nick, channel_client_t **clients)
 
 unsigned int count_channel_clients(channel_client_t **channel_clients)
 {
-    /* Return number of clients on a channel */
+    /* @Purpose: Count number of clients in channel
+     * @Params:
+     * channel_clients: pointer to channel's clients hash table's pointer
+     * @Ouput: number of clients in given channel's clients hash table
+     */
     return HASH_COUNT(*channel_clients);
 }
 
 unsigned int count_channels(channel_hb_t **channels)
 {
-    /* Get number of channels on server */
+    /* @Purpose: Count number of channels on server
+     * @Params:
+     * channel_name: pointer to channel's name string
+     * channels: pointer to channels hash table's pointer
+     * @Ouput: number of channels on server
+     */
     return HASH_COUNT(*channels);
 }
 
 channel_hb_t *get_channel_info(char *channel_name, channel_hb_t **channels)
 {
-    /* Return pointer to channel with given key (channel_name) */
+    /* @Purpose: Get channel's information from channel name
+     * @Params:
+     * channel_name: pointer to channel's name string
+     * channels: pointer to channels hash table's pointer
+     * @Ouput: Channel struct pointer
+     */
     channel_hb_t *result;
     HASH_FIND_STR(*channels, channel_name, result);
     return result;

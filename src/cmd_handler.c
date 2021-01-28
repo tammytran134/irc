@@ -852,6 +852,7 @@ void print_cmd(cmd_t full_cmd)
 
 void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
+    printf("in exec_cmd\n");
     // dispatch table that maps first string in command to a handler function
     handler_entry_t handlers[] = {
         {"NICK", handler_NICK},
@@ -877,6 +878,7 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
     // if client has registered
     bool registered = ((client->info.nick != NULL) 
                                         && (client->info.username != NULL));
+    printf("didnt go pass\n");
     for (i = 0; i < num_handlers; i++)
     {
         // if command is found in dispatch table
@@ -887,7 +889,6 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
             if ((registered) || (sameStr(cmd, "NICK")) || 
                                                         (sameStr(cmd, "USER")))
             {
-                // print_cmd(full_cmd);
                 handlers[i].func(full_cmd, connection, ctx);
                 break;
             }

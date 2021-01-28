@@ -57,10 +57,6 @@ void recv_msg(
              * and renew the counter to hold new message
              * after current command has been sent away to be processed
              */
-            // char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
-            // rmsg.msg = new_msg;
-            // rmsg.counter = 0;
-            // return rmsg;
             free(rmsg->msg);
             rmsg->msg = malloc(sizeof(char) * MAX_MSG_LEN);
             rmsg->counter = 0;
@@ -69,7 +65,6 @@ void recv_msg(
         /* If not message overflow, then add character to msg buffer */
         else
         {
-            // rmsg.msg[rmsg.counter] = c;
             rmsg->msg[rmsg->counter]= c;
             /* If end of command */
             if (c == '\n')
@@ -127,6 +122,10 @@ cmd_t parse_msg(char *msg_buffer)
     /* Parse command from message buffer into command struct */
     char *token;
     char *rest = msg_buffer;
+<<<<<<< HEAD
+
+=======
+>>>>>>> 6b8828806dde321f34393d560489f28eb88cda60
     cmd_t parsed_msg;
     parsed_msg.num_params = 0;
     int counter = 0;
@@ -165,8 +164,7 @@ cmd_t parse_msg(char *msg_buffer)
             }
             else
             {
-                char *param_so_far = malloc(sizeof(char) * 
-                        strlen(parsed_msg.params[counter-1]));
+                char param_so_far[strlen(parsed_msg.params[counter-1])];
                 strcpy(param_so_far, parsed_msg.params[counter-1]);
                 free(parsed_msg.params[counter-1]);
                 size_t concat_param_size = sizeof(char) * 
@@ -175,7 +173,6 @@ cmd_t parse_msg(char *msg_buffer)
                 strcat(parsed_msg.params[counter-1], param_so_far);
                 strcat(parsed_msg.params[counter-1], " ");
                 strcat(parsed_msg.params[counter-1], token);
-                free(param_so_far);
             }
         }
 
