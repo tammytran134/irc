@@ -34,6 +34,10 @@ void recv_msg(char *buf, msg_t *rmsg, server_ctx_t *ctx,
 
 /* This function parses a complete command and 
  * breaks it down into command part and parameters part
+ * input: a complete command
+ * output: cmd_t struct that with
+ * no of params, command,
+ * and an array of parameters
  */
 cmd_t parse_msg(char *buffer);
 

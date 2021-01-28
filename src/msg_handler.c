@@ -122,7 +122,10 @@ cmd_t parse_msg(char *msg_buffer)
     /* Parse command from message buffer into command struct */
     char *token;
     char *rest = msg_buffer;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6b8828806dde321f34393d560489f28eb88cda60
     cmd_t parsed_msg;
     parsed_msg.num_params = 0;
     int counter = 0;
@@ -164,7 +167,8 @@ cmd_t parse_msg(char *msg_buffer)
                 char param_so_far[strlen(parsed_msg.params[counter-1])];
                 strcpy(param_so_far, parsed_msg.params[counter-1]);
                 free(parsed_msg.params[counter-1]);
-                size_t concat_param_size = sizeof(char) * (strlen(param_so_far) + strlen(token) + 1);
+                size_t concat_param_size = sizeof(char) * 
+                        (strlen(param_so_far) + strlen(token) + 1);
                 parsed_msg.params[counter-1] = malloc(concat_param_size);
                 strcat(parsed_msg.params[counter-1], param_so_far);
                 strcat(parsed_msg.params[counter-1], " ");
@@ -180,6 +184,5 @@ cmd_t parse_msg(char *msg_buffer)
         }
     }
     parsed_msg.num_params = param_is_rest ? counter : counter-1;
-    print_cmd(parsed_msg);
     return parsed_msg;
 }
