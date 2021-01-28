@@ -48,20 +48,34 @@ typedef struct nick_hb
     UT_hash_handle hh;
 } nick_hb_t;
 
-/* Add nick entry with socket value to nicks hash table */
+/* Add nick entry with client socket as key to nicks hash table -> Void */
 void add_nick(char *nick, int client_socket, nick_hb_t **nicks);
-/* Remove client entry from nicks hash table and clients hashtable */
+
+/* Remove nick entry from nicks hash table with given nick -> Void */
 void remove_nick(char *nick, nick_hb_t **nicks);
-/* Get client information from clients hashtable with nick */
+
+/* Return pointer to client struct with client's nick,
+ * pointer to clients hash table's pointer, and pointer
+ * to nicks hash table's pointer.
+ */
 client_info_t *get_client_w_nick(
     char *nick,
     client_info_t **clients,
     nick_hb_t **nicks);
 
+/* Returns whehter user has entered NICK command 
+ * with client socket and pointer to clients hash table's pointer.
+ */
 bool has_entered_NICK(int client_socket, client_info_t **clients);
 
+/* Returns whehter user has entered USER command 
+ * with client socket and pointer to clients hash table's pointer.
+ */
 bool has_entered_USER(int client_socket, client_info_t **clients);
 
+/* Return the number of clients on server with pointer to
+ * clients hash table's pointer.
+ */
 int count_users(client_info_t **clients);
 
 #endif

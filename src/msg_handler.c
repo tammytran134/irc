@@ -36,7 +36,6 @@ void recv_msg(
              * if yes, then turn boolean field NICK or USER to 
              * true to pass it back to main function
              */
-            printf("copy_msg: %s", copy_msg);
             cmd_t cmd = parse_msg(copy_msg);
             if (rmsg->nick_cmd == false)
             {
@@ -58,10 +57,6 @@ void recv_msg(
              * and renew the counter to hold new message
              * after current command has been sent away to be processed
              */
-            // char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
-            // rmsg.msg = new_msg;
-            // rmsg.counter = 0;
-            // return rmsg;
             free(rmsg->msg);
             rmsg->msg = malloc(sizeof(char) * MAX_MSG_LEN);
             rmsg->counter = 0;
@@ -70,7 +65,6 @@ void recv_msg(
         /* If not message overflow, then add character to msg buffer */
         else
         {
-            // rmsg.msg[rmsg.counter] = c;
             rmsg->msg[rmsg->counter]= c;
             /* If end of command */
             if (c == '\n')
@@ -84,7 +78,6 @@ void recv_msg(
                      * if yes, then turn boolean field NICK or USER to 
                      * true to pass it back to main function
                      */
-                    printf("copy_msg: %s", copy_msg);
                     cmd_t cmd = parse_msg(copy_msg);
                     if (rmsg->nick_cmd == false)
                     {
@@ -105,9 +98,6 @@ void recv_msg(
                      * and renew the counter to hold new message
                      * after current command has been sent away to be processed
                      */
-                    // char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
-                    // rmsg.msg = new_msg;
-                    // rmsg.counter = 0;
                     free(rmsg->msg);
                     rmsg->msg = malloc(sizeof(char) * MAX_MSG_LEN);
                     rmsg->counter = 0;
@@ -132,7 +122,6 @@ cmd_t parse_msg(char *msg_buffer)
     /* Parse command from message buffer into command struct */
     char *token;
     char *rest = msg_buffer;
-    printf("msg: %s\n", msg_buffer);
 
     cmd_t parsed_msg;
     parsed_msg.num_params = 0;
@@ -169,26 +158,10 @@ cmd_t parse_msg(char *msg_buffer)
                 {
                     strcpy(parsed_msg.params[counter - 1], token);
                 }
-                // printf("token 1 is %s with length %ld\n", token, strlen(token));
             }
             else
             {
-                /* Param takes up rest of message */
-                /* Accumulate the rest of param into params[counter - 1] */
-                // char *param_so_far = parsed_msg.params[counter - 1];
-                // printf("param_so_far: %s\n", param_so_far);
-                // printf("token: %s\n", token);
-                // int concat_param_len = strlen(param_so_far) 
-                //                         + strlen(token);
-                // char *concat_param = strcat(strcat(param_so_far, " "), token);
-                // printf("concat_param: %s\n", concat_param);
-                // free(parsed_msg.params[counter - 1]);
-                // size_t new_param_size = sizeof(char) * concat_param_len;
-                // parsed_msg.params[counter - 1] = malloc(new_param_size);
-                // sprintf(parsed_msg.params[counter-1], "%s", concat_param);
-                // strcpy(parsed_msg.params[counter - 1], concat_param);
-                // parsed_msg.params[counter-1][concat_param_len] = '\0';
-                char *param_so_far = malloc(sizeof(char) * strlen(parsed_msg.params[counter-1]));
+                char param_so_far[strlen(parsed_msg.params[counter-1])];
                 strcpy(param_so_far, parsed_msg.params[counter-1]);
                 free(parsed_msg.params[counter-1]);
                 size_t concat_param_size = sizeof(char) * (strlen(param_so_far) + strlen(token) + 1);
@@ -196,8 +169,6 @@ cmd_t parse_msg(char *msg_buffer)
                 strcat(parsed_msg.params[counter-1], param_so_far);
                 strcat(parsed_msg.params[counter-1], " ");
                 strcat(parsed_msg.params[counter-1], token);
-                free(param_so_far);
-                // printf ("token 2 is %s\n", token);
             }
         }
 

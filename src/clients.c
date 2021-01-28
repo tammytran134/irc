@@ -7,7 +7,7 @@
 /* Functions for nick_hb_t hash table */
 void add_nick(char *nick, int client_socket, nick_hb_t **nicks)
 {
-    /* Add nick entry with hostname value to nicks hash table */
+    /* Add nick entry with client socket as key to nicks hash table -> Void */
     nick_hb_t *current_nick;
     HASH_FIND_INT(*nicks, &client_socket, current_nick);
     if (current_nick != NULL)
@@ -22,7 +22,7 @@ void add_nick(char *nick, int client_socket, nick_hb_t **nicks)
 
 void remove_nick(char *nick, nick_hb_t **nicks)
 {
-    /* Remove client entry from nicks hash table and clients hashtable */
+    /* Remove nick entry from nicks hash table with given nick -> Void */
     nick_hb_t *nick_to_remove;
     HASH_FIND_STR(*nicks, nick, nick_to_remove);
     if (nick_to_remove != NULL)
@@ -34,14 +34,16 @@ void remove_nick(char *nick, nick_hb_t **nicks)
 /* Functions for client_info hash table */
 void add_client(client_info_t *c, client_info_t **clients)
 {
-    /* Add client to clients' hashtable */
+    /* Add client struct to clients' hash table -> Void */
     pthread_mutex_init(&c->lock, NULL);
     HASH_ADD_INT(*clients, client_socket, c);
 }
 
 void remove_client(int client_socket, client_info_t **clients)
 {
-    /* Remove client from hashtable of clients on the server */
+    /* Remove client from hashtable of clients on the server with
+     * client socket and pointer to clients hash table's pointer.
+     */
     client_info_t *client;
     HASH_FIND_INT(*clients, &client_socket, client);
     if (client != NULL)
@@ -53,7 +55,9 @@ void remove_client(int client_socket, client_info_t **clients)
 
 client_info_t *get_client_info(int client_socket, client_info_t **clients)
 {
-    /* Return pointer to client with given key (hostname) */
+    /* Return pointer to client struct with client socket
+     * and pointer to clients hash table's pointer.
+     */
     client_info_t *result;
     HASH_FIND_INT(*clients, &client_socket, result);
     return result;
@@ -64,33 +68,43 @@ client_info_t *get_client_w_nick(
     client_info_t **clients,
     nick_hb_t **nicks)
 {
-    /* Return pointer to client with given nick */
+    /* Return pointer to client struct with client's nick,
+     * pointer to clients hash table's pointer, and pointer
+     * to nicks hash table's pointer.
+     */
     nick_hb_t *nick_i;
     HASH_FIND_STR(*nicks, nick, nick_i);
     if (nick_i != NULL)
     {
         return get_client_info(nick_i->client_socket, clients);
     }
-    printf("get_client_w_nick: nick_i is NULL\n");
+
     return NULL;
 }
 
 bool has_entered_NICK(int client_socket, client_info_t **clients)
 {
-    /* Checks if client has executed NICK command */
+    /* Returns whehter user has entered NICK command 
+     * with client socket and pointer to clients hash table's pointer.
+     */
     client_info_t *client = get_client_info(client_socket, clients);
     return client != NULL && client->info.nick != NULL;
 }
 
 bool has_entered_USER(int client_socket, client_info_t **clients)
 {
-    /* Checks if client has executed USER command */
+    /* Returns whehter user has entered USER command 
+     * with client socket and pointer to clients hash table's pointer.
+     */
     client_info_t *client = get_client_info(client_socket, clients);
     return client != NULL && client->info.username != NULL;
 }
 
 int count_users(client_info_t **clients)
 {
+    /* Return the number of clients on server with pointer to
+     * clients hash table's pointer.
+     */
     int num_of_users = 0;
     client_info_t *client;
     for (client = *clients; client != NULL; client = client->hh.next)
