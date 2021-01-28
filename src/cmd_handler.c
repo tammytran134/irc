@@ -271,7 +271,6 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         client_info_t *client = get_client_info(client_socket, clients);
         char *nick = client->info.nick;
         char server_msg[MAX_LEN_STR];
-        printf ("Quit msg is %s\n", msg);
         sprintf(server_msg, ":%s!%s@%s QUIT :%s", client->info.nick,
                 client->info.username, connection->client_hostname, msg);
         printf ("Whole msg is %s\n", server_msg);
@@ -315,7 +314,6 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
      * Add client as member of channel
      * Send messages accordingly
      */
-     printf("in JOIN handler\n");
     client_info_t *curr_client = get_client_info(connection->client_socket,
                                                  &ctx->clients_hashtable);
     if (cmd.num_params < JOIN_PAM)
@@ -333,18 +331,15 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         if (channel == NULL)
         {
             is_operator = true;
-            //printf("handler_JOIN: channel == NULL\n");
             /* Create channel with first user */
             server_add_channel(ctx, channel_name);
             channel = get_channel_info(channel_name, &ctx->channels_hashtable);
         }
         if (contains_client(curr_client->info.nick, &channel->channel_clients)) 
         {
-            //printf("handler_JOIN: already in channel...\n");
             return 0;
         }
         /* Add client to channel */
-        //printf("handler_JOIN: obtaining lock...\n");
         server_add_chan_client(channel, curr_client->info.nick,
                                is_operator);
         /* Channel data after operation */
@@ -366,8 +361,6 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
         int i = 0;
         char *nick;
-        // sprintf(single_msg, "= %s ", channel_name);
-        // strcpy(server_msg, single_msg);
         sprintf(server_msg, "= %s ", channel_name);
         for (chan_client = chan_clients; chan_client != NULL;
              chan_client = chan_client->hh.next)
@@ -375,7 +368,6 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
             nick = chan_client->nick;
             client = get_client_w_nick(nick, &ctx->clients_hashtable, 
                                         &ctx->nicks_hashtable);
-            printf("channel client: %s\n", client->info.nick);
             if (i == 0)
             {
                 sprintf(single_msg, ":@%s", client->info.nick);
@@ -391,7 +383,6 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         char end_msg[MAX_STR_LEN];
         sprintf(end_msg, "%s :End of NAMES list", channel_name);
         server_reply(end_msg, RPL_ENDOFNAMES, connection, curr_client);
-        //printf("END OF JOIN HANDLER\n");
     }
     return 0;
 }
@@ -400,7 +391,6 @@ int handler_JOIN(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 int handler_PRIVMSG(cmd_t cmd, connection_info_t *connection, 
                                             server_ctx_t *ctx)
 {
-    print_cmd(cmd);
     client_info_t *client = get_client_info(connection->client_socket,
                                             &ctx->clients_hashtable);
     if (cmd.num_params == PRIVMSG_PAM_NO_RECIPIENT)
@@ -627,7 +617,6 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                                             &ctx->clients_hashtable);
     // List all channels
     strcpy(reply_msg, "");
-    //printf ("final message here is %s\n", reply_msg);
     if (cmd.num_params == 0)
     {
         for (channel = channels; channel != NULL; channel = channel->hh.next)
@@ -642,7 +631,6 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                                             num_channel_clients);
             strcat(reply_msg, one_msg);
         }
-        printf ("final message is %s\n", reply_msg);
         send_final(client, reply_msg);
         server_reply(":End of LIST", RPL_LISTEND, connection, client);
     }
@@ -664,7 +652,6 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 /* function to handler MODE command */
 int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
-    printf ("Beginning of MODE\n");
     char *chan_name = cmd.params[0];
     char *mode = cmd.params[1];
     char *nick = cmd.params[2];
@@ -715,8 +702,6 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
     /* Update target nick's mode and notify channel */
     strcpy(target_chan_client->mode, mode);
-    printf ("new mode of %s is %s\n", target_chan_client->nick, 
-                                    target_chan_client->mode);
     char relay_msg[MAX_STR_LEN];
     sprintf(relay_msg, ":%s!%s@%s MODE %s %s %s\r\n",
                     curr_client->info.nick,
@@ -838,21 +823,8 @@ int handler_WHOIS(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     }
 }
 
-void print_cmd(cmd_t full_cmd)
-{
-    /* DEBUG tool */
-    printf("command: %s\n", full_cmd.command);
-    printf("num of params: %d\n", full_cmd.num_params);
-    for(int i = 0; i < full_cmd.num_params; i++)
-    {
-        printf("param[%d]: %s\n", i, full_cmd.params[i]);
-    }
-    return;
-}
-
 void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
 {
-    printf("in exec_cmd\n");
     // dispatch table that maps first string in command to a handler function
     handler_entry_t handlers[] = {
         {"NICK", handler_NICK},
@@ -878,7 +850,6 @@ void exec_cmd(cmd_t full_cmd, connection_info_t *connection, server_ctx_t *ctx)
     // if client has registered
     bool registered = ((client->info.nick != NULL) 
                                         && (client->info.username != NULL));
-    printf("didnt go pass\n");
     for (i = 0; i < num_handlers; i++)
     {
         // if command is found in dispatch table

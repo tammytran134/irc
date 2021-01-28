@@ -66,7 +66,6 @@ void add_channel(char *name, channel_hb_t **channels)
     channel->channel_clients = NULL;
     channel->channel_name = malloc(sizeof(char) * strlen(name));
     strcpy(channel->channel_name, name);
-    printf("channel->channel_name: %s\n", channel->channel_name);
     pthread_mutex_init(&channel->lock, NULL);
     HASH_ADD_STR(*channels, channel_name, channel);
 }
@@ -97,14 +96,6 @@ bool contains_client(char *nick, channel_client_t **clients)
      */
     channel_client_t *result;
     HASH_FIND_STR(*clients, nick, result);
-    if (result)
-    {
-        printf("contains_client: result is not NULL...\n");
-        if (result->nick != NULL)
-        {
-            printf("contains_client: result->nick = %s\n", result->nick);
-        }
-    }
     return result != NULL;
 }
 
