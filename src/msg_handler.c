@@ -122,10 +122,6 @@ cmd_t parse_msg(char *msg_buffer)
     /* Parse command from message buffer into command struct */
     char *token;
     char *rest = msg_buffer;
-<<<<<<< HEAD
-
-=======
->>>>>>> 6b8828806dde321f34393d560489f28eb88cda60
     cmd_t parsed_msg;
     parsed_msg.num_params = 0;
     int counter = 0;
