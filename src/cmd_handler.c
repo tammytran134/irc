@@ -268,8 +268,10 @@ int handler_QUIT(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         client_info_t *client = get_client_info(client_socket, clients);
         char *nick = client->info.nick;
         char server_msg[MAX_LEN_STR];
+        printf ("Quit msg is %s\n", msg);
         sprintf(server_msg, ":%s!%s@%s QUIT :%s", client->info.nick,
                 client->info.username, connection->client_hostname, msg);
+        printf ("Whole msg is %s\n", server_msg);
         /* send QUIT message to client */
         char reply_msg[MAX_LEN_STR];
         sprintf(reply_msg, "ERROR :Closing Link: %s (%s)\r\n", 
@@ -626,7 +628,7 @@ int handler_LIST(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
                                             &ctx->clients_hashtable);
     // List all channels
     strcpy(reply_msg, "");
-    printf ("final message here is %s\n", reply_msg);
+    //printf ("final message here is %s\n", reply_msg);
     if (cmd.num_params == 0)
     {
         for (channel = channels; channel != NULL; channel = channel->hh.next)
@@ -668,10 +670,8 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
     char *hostname = connection->client_hostname;
     client_info_t *curr_client = get_client_info(connection->client_socket,
                                                  &ctx->clients_hashtable);
-    printf ("Beginning of MODE1\n");
     channel_hb_t *channel = get_channel_info(chan_name,
                                              &ctx->channels_hashtable);
-    printf ("Beginning of MODE2\n");
     if (channel == NULL)
     {
         /* ERR_NOSUCHCHANNEL */
@@ -689,7 +689,6 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
 
     channel_client_t *chan_client = get_channel_client(curr_client->info.nick,
                                                     &channel->channel_clients);
-    printf ("Beginning of MODE3\n");
     if (!sameStr(chan_client->mode, OPER_ACTIVE) && 
                                         (!(curr_client->info.is_irc_operator)))
     {
@@ -702,6 +701,8 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         nick,
         &ctx->clients_hashtable,
         &ctx->nicks_hashtable);
+    channel_client_t *target_chan_client = get_channel_client(nick,
+                                                    &channel->channel_clients);
     if (!contains_client(target_client->info.nick, &channel->channel_clients))
     {
 
@@ -711,20 +712,18 @@ int handler_MODE(cmd_t cmd, connection_info_t *connection, server_ctx_t *ctx)
         return 0;
     }
 
-    if (strlen(mode) == 2)
-    {
-        /* Update target nick's mode and notify channel */
-        strcpy(chan_client->mode, mode);
-        char relay_msg[MAX_STR_LEN];
-        sprintf(relay_msg, ":%s!%s@%s MODE %s %s %s\r\n",
-                curr_client->info.nick,
-                curr_client->info.username,
-                curr_client->hostname,
-                chan_name,
-                mode,
-                nick);
+    /* Update target nick's mode and notify channel */
+    strcpy(target_chan_client->mode, mode);
+    printf ("new mode of %s is %s\n", target_chan_client->nick, target_chan_client->mode);
+    char relay_msg[MAX_STR_LEN];
+    sprintf(relay_msg, ":%s!%s@%s MODE %s %s %s\r\n",
+                    curr_client->info.nick,
+                    curr_client->info.username,
+                    curr_client->hostname,
+                    chan_name,
+                    mode,
+                    nick);
         server_send_chan_client(channel->channel_clients, relay_msg, ctx);
-    }
 
     return 0;
 }
