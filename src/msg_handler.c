@@ -5,28 +5,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-#include "handler.h"
-#include "reply.h"
-
-void add_client(client_info_t *c, client_info_t **clients)
-{
-    /* Add client to clients' hashtable */
-    HASH_ADD_STR(*clients, hostname, c);
-}
-
-client_info_t *get_client_info(char *hostname, client_info_t **clients)
-{
-    /* Return pointer to client with given key (hostname) */
-    client_info_t *result;
-    HASH_FIND_STR(*clients, hostname, result);
-    return result;
-}
-
-bool sameStr(char *s1, char *s2)
-{
-    /* Check if two strings are the same */
-    return strcmp(s1, s2) == 0;
-}
+#include "msg_handler.h"
 
 void send_welcome(
     int client_socket,
@@ -54,10 +33,8 @@ void send_welcome(
 msg_t recv_msg(
     char *buf,
     msg_t rmsg,
-    client_info_t **clients,
-    int client_socket,
-    char *client_hostname,
-    char *server_hostname)
+    server_ctx_t *ctx,
+    connection_info_t *connection)
 {
     /* Receives and process incoming message from server:
      * buf: buffer for incoming mssage
@@ -66,6 +43,7 @@ msg_t recv_msg(
      * This message returns the updated msg_t struct back to the main function,
      * so that the msg_t state gets updated between each recv() call
      */
+    printf ("it comes to recv_msg\n");
     char c;
     for (int i = 0; i < strlen(buf); i++)
     {
@@ -78,21 +56,11 @@ msg_t recv_msg(
             /* copy the message to a new char array to process it */
             char copy_msg[MAX_MSG_LEN];
             strcpy(copy_msg, rmsg.msg);
-            /* process it */
-            exec_msg(client_socket, clients, client_hostname, 
-                    server_hostname, parse_msg(copy_msg));
-            /* renew the msg_t struct to wipe out the char *msg buffer
-             * and renew the counter to hold new message
-             * after current command has been sent away to be processed
-             */
-            char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
-            rmsg.msg = new_msg;
-            rmsg.counter = 0;
-            cmd_t cmd = parse_msg(copy_msg);
             /* check if the command being sent is NICK or USER
              * if yes, then turn boolean field NICK or USER to 
              * true to pass it back to main function
              */
+            cmd_t cmd = parse_msg(copy_msg);
             if (rmsg.nick_cmd == false)
             {
                 if (sameStr(cmd.command, "NICK"))
@@ -107,6 +75,16 @@ msg_t recv_msg(
                     rmsg.user_cmd = true;
                 }
             }
+            /* process it */
+            //exec_msg(ctx, cmd, connection);
+            exec_cmd(cmd, connection, ctx);
+            /* renew the msg_t struct to wipe out the char *msg buffer
+             * and renew the counter to hold new message
+             * after current command has been sent away to be processed
+             */
+            char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
+            rmsg.msg = new_msg;
+            rmsg.counter = 0;
             return rmsg;
         }
         /* If not message overflow, then add character to msg buffer */
@@ -121,21 +99,11 @@ msg_t recv_msg(
                     /* copy the message to a new char array to process it */
                     char copy_msg[strlen(rmsg.msg)];
                     strcpy(copy_msg, rmsg.msg);
-                    exec_msg(client_socket, clients, 
-                            client_hostname, server_hostname, 
-                            parse_msg(copy_msg));
-                    /* renew the msg_t struct to wipe out the char *msg buffer
-                     * and renew the counter to hold new message
-                     * after current command has been sent away to be processed
-                     */
-                    char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
-                    rmsg.msg = new_msg;
-                    rmsg.counter = 0;
-                    cmd_t cmd = parse_msg(copy_msg);
                     /* check if the command being sent is NICK or USER
                      * if yes, then turn boolean field NICK or USER to 
                      * true to pass it back to main function
                      */
+                    cmd_t cmd = parse_msg(copy_msg);
                     if (rmsg.nick_cmd == false)
                     {
                         if (sameStr(cmd.command, "NICK"))
@@ -150,6 +118,15 @@ msg_t recv_msg(
                             rmsg.user_cmd = true;
                         }
                     }
+                    //exec_msg(ctx, cmd, connection);
+                    exec_cmd(cmd, connection, ctx);
+                    /* renew the msg_t struct to wipe out the char *msg buffer
+                     * and renew the counter to hold new message
+                     * after current command has been sent away to be processed
+                     */
+                    char *new_msg = (char *)malloc(sizeof(char) * MAX_MSG_LEN);
+                    rmsg.msg = new_msg;
+                    rmsg.counter = 0;
                 }
                 else
                 {
@@ -223,23 +200,24 @@ cmd_t parse_msg(char *msg_buffer)
         }
     }
 
-    parsed_msg.num_params = counter;
+    parsed_msg.num_params = param_is_rest ? counter : counter-1;
 
     return parsed_msg;
 }
 
 void exec_msg(
-    int client_socket,
-    client_info_t **clients,
-    char *client_hostname,
-    char *server_hostname,
-    cmd_t msg)
+    server_ctx_t *ctx,
+    cmd_t msg,
+    connection_info_t *connection)
 {
     /* Execute parsed message */
     char *reply_code = malloc(sizeof(char) * 3);
+    client_info_t *clients = ctx->clients_hashtable;
     /* Get client data from hashtable. Return NULL if client is not found */
-    client_info_t *client = get_client_info(client_hostname, clients);
-
+    int client_socket = connection->client_socket;
+    char *client_hostname = connection->client_hostname;
+    char *server_hostname = connection->server_hostname;
+    client_info_t *client = get_client_info(client_hostname, &clients);
     if (sameStr(msg.command, "NICK"))
     {
         /* Command == "NICK" */
@@ -257,7 +235,7 @@ void exec_msg(
             new_client->info.username = NULL;
             new_client->info.realname = NULL;
             /* Add new client to clients hashtable */
-            add_client(new_client, clients);
+            add_client(new_client, &clients);
         }
         else
         {
@@ -321,7 +299,7 @@ void exec_msg(
             strcpy(new_client->hostname, client_hostname);
             new_client->info.nick = NULL;
             /* Add new client to clients' hashtable */
-            add_client(new_client, clients);
+            add_client(new_client, &clients);
         }
     }
 

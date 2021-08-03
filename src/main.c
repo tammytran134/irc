@@ -48,9 +48,75 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <pthread.h>
+#include <signal.h>
+#include <errno.h>
+#include <time.h>
 
 #include "log.h"
-#include "handler.h"
+#include "msg_handler.h"
+#include "server_info.h"
+#include "clients.h"
+
+void *service_single_client(void *args) {
+    worker_args_t *wa;
+    server_ctx_t *ctx;
+    int client_socket;
+    int numbytes;
+    char buf[MAX_BUF_LEN];
+    char msg[MAX_MSG_LEN];
+    char *client_hostname;
+    msg_t rmsg = {"", 0, false, false};
+    rmsg.msg = msg;
+
+    wa = (worker_args_t *) args;
+    client_socket = wa->socket;
+    client_hostname = wa->client_hostname;
+    ctx = wa->ctx;
+
+    /* Add an unknown client to server's client hash table */
+    client_info_t *connected_client = malloc(sizeof(client_info_t));
+    connected_client->client_socket = client_socket;
+    connected_client->hostname = client_hostname;
+    connected_client->info.is_irc_operator = false;
+    connected_client->info.nick = NULL;
+    connected_client->info.username = NULL;
+    connected_client->info.realname = NULL;
+    server_add_client(ctx, connected_client);
+
+    pthread_detach(pthread_self());
+    while ((numbytes = recv(client_socket, buf, sizeof buf, 0)) != -1)
+    {
+        buf[numbytes] = '\0';
+        /* Get name of host server */
+        char server_hostname[MAX_STR_LEN];
+        gethostname(server_hostname, sizeof server_hostname);
+        /* Send the data received from the buf 
+         * to recv_msg to parse and process */
+        connection_info_t *connection = calloc(1, sizeof(connection_info_t));
+        connection->client_socket = client_socket;
+        connection->server_hostname = server_hostname;
+        connection->client_hostname = client_hostname;
+        connection->registered = false;
+        rmsg = recv_msg(buf, rmsg, ctx, connection);
+        printf("gets here tho\n");
+    }
+    /* if client's connection is unknown, change the 
+     * unknown_connection field in ctx when client quits
+     */
+    client_info_t *clients = ctx->clients_hashtable;
+    if (has_entered_NICK(client_hostname, &clients) || 
+        has_entered_USER(client_hostname, &clients))
+    {
+        change_connection(ctx, KNOWN, DECR);
+    }
+    else 
+    {
+        change_connection(ctx, UNKNOWN, DECR);
+    }
+    close(client_socket);
+    pthread_exit(NULL);
+}
 
 int main(int argc, char *argv[])
 {
@@ -127,17 +193,57 @@ int main(int argc, char *argv[])
     }
 
     /* Your code goes here */
+    
+    /* Initialize hashtable of clients' information */
+    // client_info_t *clients_hashtable = calloc(1, sizeof(client_info_t));
+    // pthread_mutex_init(&clients_hashtable->lock, NULL);
+    /* Initialize hashtable of nicks' informatzion */
+    // nick_hb_t *nicks_hashtable = calloc(1, sizeof(nick_hb_t));
+    // pthread_mutex_init(&nicks_hashtable->lock, NULL);
+    /* Initialize hashtable of channels' information */
+    // channel_hb_t *channels_hashtable = calloc(1, sizeof(channel_hb_t));
+    // pthread_mutex_init(&channels_hashtable->lock, NULL);
+    // channel_client_t *channel_clients = NULL;
+    // channels_hashtable->channel_clients = channel_clients;
+    /* Initialize hashtable of irc operators' information */
+    // irc_operator_t *irc_operators_hashtable = calloc(1, sizeof(irc_operator_t));
+    // irc_oper_t *irc_oper = NULL;
+    // pthread_mutex_init(&irc_operators_hashtable->lock, NULL);
+    // irc_operators_hashtable->irc_oper = irc_oper;
+
+    /* Initialize context object */
+    server_ctx_t *ctx = calloc(1, sizeof(server_ctx_t));
+    ctx->num_connections = 0;
+    ctx->num_unknown_connections = 0;
+    ctx->clients_hashtable = NULL;
+    ctx->nicks_hashtable = NULL;
+    ctx->channels_hashtable = NULL;
+    ctx->irc_operators_hashtable = NULL;
+    ctx->password = passwd;
+    pthread_mutex_init(&ctx->lock, NULL);
+    pthread_mutex_init(&ctx->channels_lock, NULL);
+    pthread_mutex_init(&ctx->clients_lock, NULL);
+    pthread_mutex_init(&ctx->nicks_lock, NULL);
+    pthread_mutex_init(&ctx->operators_lock, NULL);
+
+    sigset_t new;
+    sigemptyset (&new);
+    sigaddset(&new, SIGPIPE);
+    if (pthread_sigmask(SIG_BLOCK, &new, NULL) != 0) 
+    {
+        perror("Unable to mask SIGPIPE");
+        exit(-1);
+    }
+
+    /* Set up socket */
     int server_socket;
     int client_socket;
     struct addrinfo hints, *res, *p;
-    struct sockaddr_storage client_addr;
+    struct sockaddr_storage *client_addr;
     socklen_t sin_size = sizeof(struct sockaddr_storage);
     int yes = 1;
-    int numbytes;
-    char buf[MAX_BUF_LEN];
-    char msg[MAX_MSG_LEN];
-    msg_t rmsg = {"", 0, false, false};
-    rmsg.msg = msg;
+    pthread_t worker_thread;
+    worker_args_t (*wa);
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -187,42 +293,52 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    /* Initialize hashtable of clients' information */
-    client_info_t *clients_hashtable = NULL;
-
     while (1)
-    {
+    {   
+        client_addr = calloc(1, sin_size);
         client_socket = accept(server_socket, 
-                                (struct sockaddr *) &client_addr, 
+                                (struct sockaddr *) client_addr, 
                                 &sin_size);
-        /* This loop continues to listen and receive message
-         * until client has put in NICK and USER command */
-        while (!(rmsg.nick_cmd && rmsg.user_cmd))
+        change_connection(ctx, UNKNOWN, INCR);
+        if (client_socket == -1) 
         {
-            if ((numbytes = recv(client_socket, buf, sizeof buf, 0)) == -1)
-            {
-                perror("recv() failed");
-                exit(1);
-            }
-            buf[numbytes] = '\0';
-            char server_hostname[MAX_STR_LEN];
-            /* Get name of host server */
-            gethostname(server_hostname, sizeof server_hostname);
-            char hostname[MAX_STR_LEN];
-            char port[MAX_STR_LEN];
-            /* Get client's hostname */
-            int result = getnameinfo((struct sockaddr *) &client_addr,
-                                        sin_size, 
-                                        hostname,
-                                        sizeof hostname,
-                                        port,
-                                        sizeof port, 0);
-            /* Send the data received from the buf 
-             * to recv_msg to parse and process */
-            rmsg = recv_msg(buf, rmsg, &clients_hashtable, client_socket, 
-                            hostname, server_hostname);
+            free(client_addr);
+            perror("Could not accept() connection");
+            continue;
+        }
+
+        /* Get client's hostname */
+        char client_hostname[MAX_STR_LEN];
+        char port[MAX_STR_LEN];
+        int result = getnameinfo((struct sockaddr *) client_addr,
+                                    sin_size, 
+                                    client_hostname,
+                                    sizeof client_hostname,
+                                    port,
+                                    sizeof port, 0);
+        wa = calloc(1, sizeof(worker_args_t));
+        wa->socket = client_socket;
+        wa->client_hostname = client_hostname;
+        wa->ctx = ctx;
+
+        if (pthread_create(&worker_thread, NULL, service_single_client, wa) != 0)
+        {
+            perror("Could not create a worker thread");
+            free(client_addr);
+            free(wa);
+            close(client_socket);
+            close(server_socket);
+            return EXIT_FAILURE;
         }
     }
     close(server_socket);
-    return 0;
+    /* ADDED: Destroy the lock */
+    pthread_mutex_destroy(&ctx->nicks_lock);
+    pthread_mutex_destroy(&ctx->channels_lock);
+    pthread_mutex_destroy(&ctx->clients_lock);
+    pthread_mutex_destroy(&ctx->operators_lock);
+    pthread_mutex_destroy(&ctx->lock);
+    free(ctx);
+
+    return EXIT_SUCCESS;
 }

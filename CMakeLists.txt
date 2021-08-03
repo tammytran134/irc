@@ -11,8 +11,13 @@ include_directories(src
 
 add_executable(chirc
     src/main.c
-    src/handler.c
-    src/log.c)
+    src/msg_handler.c
+    src/log.c
+    src/server_info.c
+    src/cmd_handler.c
+    src/clients.c
+    src/channels.c
+    src/reply.c)
 
 target_link_libraries(chirc pthread)
 
